@@ -1,1 +1,1 @@
-
+print("Affiliate Agent started")
