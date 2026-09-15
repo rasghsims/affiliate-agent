@@ -1,381 +1,1054 @@
 <!DOCTYPE html>
+
 <html lang="en">
+
 <head>
+
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>StrongerYears | Healthy Aging & Active Living</title>
+<meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+>
 
-<meta name="description"
-content="Practical guides for healthy aging, muscle support, nutrition,
-strength, recovery and active living.">
+<title>
+StrongerYears — A Better Way to Age Strong
+</title>
+
+<meta
+    name="description"
+    content="Practical, thoughtful guides for strength, nutrition, recovery and active living as you age."
+>
+
+<meta
+    name="robots"
+    content="index,follow"
+>
 
 <style>
+
+:root {
+
+    --ink: #111713;
+    --green: #183b2e;
+    --green-2: #2f624d;
+    --cream: #f5f3ed;
+    --white: #fffefa;
+    --line: #deded6;
+    --gold: #b49a68;
+    --muted: #68736d;
+}
+
 * {
     box-sizing: border-box;
 }
 
+html {
+    scroll-behavior: smooth;
+}
+
 body {
+
     margin: 0;
-    font-family: Arial, Helvetica, sans-serif;
-    background: #f7faf8;
-    color: #173b3d;
-    line-height: 1.7;
+
+    background: var(--cream);
+
+    color: var(--ink);
+
+    font-family:
+        Arial,
+        Helvetica,
+        sans-serif;
 }
 
-header {
-    background: white;
-    border-bottom: 1px solid #e5eeee;
-    padding: 18px 6%;
+.header {
+
+    position: sticky;
+
+    top: 0;
+
+    z-index: 50;
+
+    background:
+        rgba(245,243,237,.9);
+
+    backdrop-filter:
+        blur(20px);
+
+    border-bottom:
+        1px solid rgba(0,0,0,.06);
 }
 
-.nav {
-    max-width: 1120px;
+.header-inner {
+
+    max-width: 1180px;
+
     margin: auto;
+
+    padding: 18px 25px;
+
     display: flex;
+
     align-items: center;
+
     justify-content: space-between;
 }
 
 .logo {
-    font-size: 23px;
-    font-weight: 800;
-}
 
-.logo span {
-    color: #23815f;
-}
+    color: var(--ink);
 
-nav a {
-    margin-left: 25px;
     text-decoration: none;
-    color: #173b3d;
-    font-weight: 600;
+
+    font-size: 20px;
+
+    font-weight: 850;
+
+    letter-spacing: -1px;
 }
+
+.header-link {
+
+    color: var(--muted);
+
+    text-decoration: none;
+
+    font-size: 13px;
+
+    font-weight: 700;
+}
+
+
+/* HERO */
 
 .hero {
-    padding: 85px 20px;
-    background: linear-gradient(135deg, #e8f3ed, #ffffff);
+
+    min-height: 88vh;
+
+    display: flex;
+
+    align-items: center;
+
+    padding:
+        90px 25px;
+
+    background:
+
+        radial-gradient(
+            circle at 82% 18%,
+            rgba(180,154,104,.2),
+            transparent 25%
+        ),
+
+        radial-gradient(
+            circle at 10% 80%,
+            rgba(47,98,77,.1),
+            transparent 30%
+        ),
+
+        linear-gradient(
+            135deg,
+            #edf0e9,
+            #f5f3ed
+        );
 }
 
 .hero-inner {
-    max-width: 950px;
+
+    width: 100%;
+
+    max-width: 1180px;
+
     margin: auto;
-    text-align: center;
 }
 
-.badge {
+.hero-kicker {
+
     display: inline-block;
-    padding: 7px 14px;
-    border-radius: 30px;
-    background: white;
-    font-size: 13px;
-    font-weight: 700;
-    letter-spacing: 1px;
+
+    margin-bottom: 24px;
+
+    color: var(--green-2);
+
+    font-size: 12px;
+
+    font-weight: 800;
+
+    letter-spacing: 2.5px;
+
     text-transform: uppercase;
 }
 
 .hero h1 {
-    font-size: clamp(42px, 7vw, 70px);
-    line-height: 1.05;
-    margin: 22px 0;
+
+    max-width: 1000px;
+
+    margin: 0;
+
+    font-family:
+        Georgia,
+        "Times New Roman",
+        serif;
+
+    font-size:
+        clamp(58px, 9vw, 118px);
+
+    line-height: .9;
+
+    letter-spacing: -6px;
+
+    font-weight: 500;
 }
 
-.hero p {
-    max-width: 700px;
-    margin: auto;
+.hero h1 em {
+
+    color: var(--green-2);
+
+    font-style: italic;
+}
+
+.hero-copy {
+
+    max-width: 620px;
+
+    margin-top: 38px;
+
+    color: var(--muted);
+
     font-size: 19px;
-    color: #526969;
+
+    line-height: 1.65;
 }
 
-.button {
-    display: inline-block;
-    margin-top: 28px;
-    padding: 15px 28px;
-    border-radius: 30px;
-    background: #23815f;
+.hero-bottom {
+
+    margin-top: 55px;
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 25px;
+
+    flex-wrap: wrap;
+}
+
+.hero-button {
+
+    display: inline-flex;
+
+    align-items: center;
+
+    gap: 20px;
+
+    padding:
+        16px 22px;
+
+    background: var(--green);
+
     color: white;
+
     text-decoration: none;
-    font-weight: 700;
+
+    font-size: 14px;
+
+    font-weight: 800;
+
+    border-radius: 2px;
 }
 
-.container {
-    max-width: 1120px;
-    margin: 60px auto;
-    padding: 0 20px;
+.hero-button span {
+    font-size: 18px;
+}
+
+.hero-note {
+
+    color: var(--muted);
+
+    font-size: 13px;
+}
+
+
+/* INTRO STRIP */
+
+.intro {
+
+    background: var(--green);
+
+    color: white;
+
+    padding:
+        95px 25px;
+}
+
+.intro-inner {
+
+    max-width: 1000px;
+
+    margin: auto;
+
+    text-align: center;
+}
+
+.intro-label {
+
+    margin-bottom: 22px;
+
+    color:
+        rgba(255,255,255,.55);
+
+    font-size: 11px;
+
+    font-weight: 800;
+
+    letter-spacing: 2.5px;
+}
+
+.intro h2 {
+
+    margin: 0;
+
+    font-family:
+        Georgia,
+        "Times New Roman",
+        serif;
+
+    font-size:
+        clamp(38px, 5vw, 65px);
+
+    line-height: 1.05;
+
+    font-weight: 500;
+
+    letter-spacing: -2px;
+}
+
+.intro p {
+
+    max-width: 650px;
+
+    margin:
+        28px auto 0;
+
+    color:
+        rgba(255,255,255,.72);
+
+    font-size: 17px;
+
+    line-height: 1.7;
+}
+
+
+/* STORIES */
+
+.stories {
+
+    max-width: 1180px;
+
+    margin: auto;
+
+    padding:
+        110px 25px;
+}
+
+.section-top {
+
+    display: flex;
+
+    align-items: end;
+
+    justify-content: space-between;
+
+    gap: 30px;
+
+    margin-bottom: 50px;
+}
+
+.section-kicker {
+
+    color: var(--green-2);
+
+    font-size: 11px;
+
+    font-weight: 800;
+
+    letter-spacing: 2px;
 }
 
 .section-title {
-    text-align: center;
-    margin-bottom: 35px;
+
+    margin:
+        10px 0 0;
+
+    font-family:
+        Georgia,
+        "Times New Roman",
+        serif;
+
+    font-size:
+        clamp(40px, 5vw, 62px);
+
+    font-weight: 500;
+
+    line-height: 1;
+
+    letter-spacing: -2px;
 }
 
-.section-title h2 {
-    font-size: 36px;
-    margin-bottom: 8px;
+.story-list {
+
+    border-top:
+        1px solid var(--line);
 }
 
-.section-title p {
-    color: #647777;
-}
+.story-card {
 
-.article-card {
-    background: white;
-    border-radius: 20px;
-    padding: 35px;
-    box-shadow: 0 12px 40px rgba(20,60,60,.08);
-    border: 1px solid #e4eeee;
-}
-
-.article-card h3 {
-    font-size: 30px;
-    margin-top: 0;
-}
-
-.article-card p {
-    color: #596d6d;
-}
-
-.read-more {
-    display: inline-block;
-    margin-top: 15px;
-    padding: 13px 22px;
-    border-radius: 28px;
-    background: #173b3d;
-    color: white;
-    text-decoration: none;
-    font-weight: 700;
-}
-
-.topics {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 22px;
-    margin-top: 25px;
+
+    grid-template-columns:
+        100px 1fr;
+
+    padding:
+        35px 0;
+
+    border-bottom:
+        1px solid var(--line);
+
+    transition:
+        padding .25s ease;
 }
 
-.topic {
-    background: white;
-    padding: 28px;
-    border-radius: 18px;
-    border: 1px solid #e5eeee;
+.story-card:hover {
+    padding-left: 12px;
 }
 
-.topic h3 {
-    margin-top: 0;
+.story-number {
+
+    color: var(--gold);
+
+    font-family:
+        Georgia,
+        "Times New Roman",
+        serif;
+
+    font-size: 18px;
 }
 
-.topic p {
-    color: #637575;
+.story-category {
+
+    margin-bottom: 12px;
+
+    color: var(--muted);
+
+    font-size: 10px;
+
+    font-weight: 800;
+
+    letter-spacing: 1.8px;
 }
 
-.cta-section {
-    margin-top: 70px;
-    padding: 55px 30px;
-    border-radius: 24px;
-    background: #edf7f1;
-    text-align: center;
+.story-body h3 {
+
+    max-width: 800px;
+
+    margin:
+        0 0 20px;
+
+    font-family:
+        Georgia,
+        "Times New Roman",
+        serif;
+
+    font-size:
+        clamp(27px, 4vw, 44px);
+
+    line-height: 1.1;
+
+    letter-spacing: -1px;
+
+    font-weight: 500;
 }
 
-.cta-section h2 {
-    font-size: 36px;
-    margin-top: 0;
+.story-body a {
+
+    color: var(--green-2);
+
+    text-decoration: none;
+
+    font-size: 13px;
+
+    font-weight: 800;
 }
+
+.story-body a span {
+    margin-left: 8px;
+}
+
+
+/* BRAND SECTION */
+
+.brand-section {
+
+    padding:
+        120px 25px;
+
+    background: #e8ebe3;
+}
+
+.brand-inner {
+
+    max-width: 1180px;
+
+    margin: auto;
+
+    display: grid;
+
+    grid-template-columns:
+        1fr 1fr;
+
+    gap: 90px;
+
+    align-items: center;
+}
+
+.brand-label {
+
+    color: var(--green-2);
+
+    font-size: 11px;
+
+    font-weight: 800;
+
+    letter-spacing: 2px;
+}
+
+.brand-inner h2 {
+
+    margin:
+        15px 0 0;
+
+    font-family:
+        Georgia,
+        "Times New Roman",
+        serif;
+
+    font-size:
+        clamp(40px, 5vw, 65px);
+
+    line-height: 1;
+
+    font-weight: 500;
+
+    letter-spacing: -2px;
+}
+
+.brand-copy {
+
+    color: var(--muted);
+
+    font-size: 17px;
+
+    line-height: 1.8;
+}
+
+.pill-row {
+
+    display: flex;
+
+    flex-wrap: wrap;
+
+    gap: 10px;
+
+    margin-top: 30px;
+}
+
+.pill {
+
+    padding:
+        9px 13px;
+
+    border:
+        1px solid #cdd2ca;
+
+    color: var(--green);
+
+    font-size: 11px;
+
+    font-weight: 800;
+
+    letter-spacing: .7px;
+}
+
+
+/* DISCLOSURE */
 
 .disclosure {
-    max-width: 800px;
-    margin: 45px auto;
-    padding: 20px;
-    background: white;
-    border-radius: 12px;
+
+    max-width: 850px;
+
+    margin: auto;
+
+    padding:
+        60px 25px;
+
+    color: var(--muted);
+
     font-size: 13px;
-    color: #657777;
-    text-align: center;
+
+    line-height: 1.7;
 }
 
-footer {
-    padding: 40px 20px;
+.disclosure-title {
+
+    color: var(--ink);
+
+    font-weight: 800;
+
+    margin-bottom: 7px;
+}
+
+
+/* FOOTER */
+
+.footer {
+
+    padding:
+        50px 25px;
+
+    background: #101914;
+
+    color:
+        rgba(255,255,255,.6);
+
     text-align: center;
-    color: #718080;
+
     font-size: 13px;
 }
+
+.footer strong {
+
+    display: block;
+
+    margin-bottom: 10px;
+
+    color: white;
+
+    font-size: 16px;
+}
+
 
 @media (max-width: 750px) {
-    nav {
-        display: none;
+
+    .hero {
+        min-height: 82vh;
+        padding: 75px 20px;
     }
 
-    .topics {
+    .hero h1 {
+        font-size: 58px;
+        letter-spacing: -3px;
+    }
+
+    .hero-copy {
+        font-size: 17px;
+    }
+
+    .intro {
+        padding: 75px 20px;
+    }
+
+    .stories {
+        padding: 75px 20px;
+    }
+
+    .section-top {
+        display: block;
+    }
+
+    .story-card {
+        grid-template-columns:
+            55px 1fr;
+        padding:
+            28px 0;
+    }
+
+    .story-body h3 {
+        font-size: 29px;
+    }
+
+    .brand-section {
+        padding: 75px 20px;
+    }
+
+    .brand-inner {
         grid-template-columns: 1fr;
+        gap: 35px;
     }
 
-    .article-card {
-        padding: 25px;
-    }
 }
+
 </style>
+
 </head>
 
 <body>
 
-<header>
-<div class="nav">
 
-<div class="logo">
-Stronger<span>Years</span>
-</div>
+<header class="header">
 
-<nav>
-<a href="index.html">Home</a>
-<a href="content/build-strength-and-vitality-as-you-age-2026-09-15-132728.html">
-Latest Article
-</a>
-</nav>
+    <div class="header-inner">
 
-</div>
+        <a
+            class="logo"
+            href="index.html"
+        >
+            StrongerYears
+        </a>
+
+        <a
+            class="header-link"
+            href="#guides"
+        >
+            Explore Guides ↓
+        </a>
+
+    </div>
+
 </header>
+
 
 <section class="hero">
 
-<div class="hero-inner">
+    <div class="hero-inner">
 
-<div class="badge">
-Healthy Aging • Active Living
-</div>
+        <div class="hero-kicker">
+            Healthy aging / Active living
+        </div>
 
-<h1>
-Build stronger habits for your later years.
-</h1>
+        <h1>
+            Age well.<br>
+            Live <em>strong.</em>
+        </h1>
 
-<p>
-Practical, easy-to-understand guides covering muscle support,
-nutrition, recovery, energy and active living.
-</p>
+        <p class="hero-copy">
 
-<a class="button"
-href="content/build-strength-and-vitality-as-you-age-2026-09-15-132728.html">
-Read the Latest Guide
-</a>
+            Thoughtful, practical guidance for people who want
+            to protect their strength, stay active and make
+            smarter choices as the years go by.
 
-</div>
+        </p>
 
-</section>
+        <div class="hero-bottom">
 
-<section class="container">
+            <a
+                class="hero-button"
+                href="#guides"
+            >
+                Explore the guides
+                <span>↓</span>
+            </a>
 
-<div class="section-title">
+            <div class="hero-note">
+                No hype. Just useful information.
+            </div>
 
-<h2>Latest from StrongerYears</h2>
+        </div>
 
-<p>
-Useful information designed to help you make more informed
-wellness and lifestyle decisions.
-</p>
-
-</div>
-
-<div class="article-card">
-
-<h3>
-Build Strength and Vitality as You Age
-</h3>
-
-<p>
-Explore practical considerations for maintaining strength,
-supporting an active lifestyle and making thoughtful nutrition
-choices as you get older.
-</p>
-
-<a class="read-more"
-href="content/build-strength-and-vitality-as-you-age-2026-09-15-132728.html">
-Read Full Article →
-</a>
-
-</div>
+    </div>
 
 </section>
 
-<section class="container">
 
-<div class="section-title">
+<section class="intro">
 
-<h2>Explore Our Topics</h2>
+    <div class="intro-inner">
 
-<p>
-Simple guides focused on the areas that matter for active aging.
-</p>
+        <div class="intro-label">
+            THE STRONGERYEARS APPROACH
+        </div>
 
-</div>
+        <h2>
+            Your best years aren't behind you.
+        </h2>
 
-<div class="topics">
+        <p>
 
-<div class="topic">
-<h3>💪 Muscle & Strength</h3>
-<p>
-Learn about practical habits and nutrition considerations
-for maintaining strength and staying active.
-</p>
-</div>
+            Getting older changes your body.
+            It doesn't have to shrink your ambitions.
+            We make complex topics around nutrition,
+            strength and active living easier to understand.
 
-<div class="topic">
-<h3>🥗 Nutrition</h3>
-<p>
-Understand everyday nutrition choices and what to consider
-when evaluating supplements.
-</p>
-</div>
+        </p>
 
-<div class="topic">
-<h3>🚶 Active Aging</h3>
-<p>
-Ideas for supporting an active lifestyle and building
-healthy long-term habits.
-</p>
-</div>
-
-</div>
+    </div>
 
 </section>
 
-<section class="container">
 
-<div class="cta-section">
+<section
+    class="stories"
+    id="guides"
+>
 
-<h2>
-Take a closer look at your nutrition options.
-</h2>
+    <div class="section-top">
 
-<p>
-If you're exploring amino-acid supplements as part of your
-nutrition routine, you can learn more about one option here.
-</p>
+        <div>
 
-<a class="button"
-href="https://www.advancedbionutritionals.com/DS24/Advanced-Amino/Muscle-Mass-Loss/HD.htm#aff=Healthy_w0rld"
-rel="nofollow sponsored noopener"
-target="_blank">
-Learn More
-</a>
+            <div class="section-kicker">
+                THE JOURNAL
+            </div>
 
-</div>
+            <h2 class="section-title">
+                Latest Guides
+            </h2>
 
-<div class="disclosure">
+        </div>
 
-<strong>Affiliate Disclosure</strong><br><br>
+    </div>
 
-I may earn a commission if you buy through links on this page,
-at no extra cost to you.
 
-</div>
+    <div class="story-list">
+
+        
+
+    <article class="story-card">
+
+        <div class="story-number">
+            01
+        </div>
+
+        <div class="story-body">
+
+            <div class="story-category">
+                HEALTHY AGING / GUIDE
+            </div>
+
+            <h3>
+                Selecting a Muscle Support Supplement for Healthy Aging
+            </h3>
+
+            <a
+                href="content/selecting-a-muscle-support-supplement-for-healthy-aging-2026-09-15-142326.html"
+            >
+                Read article
+                <span>↗</span>
+            </a>
+
+        </div>
+
+    </article>
+
+    
+
+    <article class="story-card">
+
+        <div class="story-number">
+            02
+        </div>
+
+        <div class="story-body">
+
+            <div class="story-category">
+                HEALTHY AGING / GUIDE
+            </div>
+
+            <h3>
+                Nutrition Strategies for Staying Active and Vital After 50
+            </h3>
+
+            <a
+                href="content/nutrition-strategies-for-staying-active-and-vital-after-50-2026-09-15-145156.html"
+            >
+                Read article
+                <span>↗</span>
+            </a>
+
+        </div>
+
+    </article>
+
+    
+
+    <article class="story-card">
+
+        <div class="story-number">
+            03
+        </div>
+
+        <div class="story-body">
+
+            <div class="story-category">
+                HEALTHY AGING / GUIDE
+            </div>
+
+            <h3>
+                How to Choose the Right Amino Acid Supplement for Healthy Aging and Active Living
+            </h3>
+
+            <a
+                href="content/how-to-choose-the-right-amino-acid-supplement-for-healthy-aging-and-active-living-2026-09-15-135408.html"
+            >
+                Read article
+                <span>↗</span>
+            </a>
+
+        </div>
+
+    </article>
+
+    
+
+    <article class="story-card">
+
+        <div class="story-number">
+            04
+        </div>
+
+        <div class="story-body">
+
+            <div class="story-category">
+                HEALTHY AGING / GUIDE
+            </div>
+
+            <h3>
+                Build Strength and Vitality as You Age
+            </h3>
+
+            <a
+                href="content/build-strength-and-vitality-as-you-age-2026-09-15-132728.html"
+            >
+                Read article
+                <span>↗</span>
+            </a>
+
+        </div>
+
+    </article>
+
+    
+
+    <article class="story-card">
+
+        <div class="story-number">
+            05
+        </div>
+
+        <div class="story-body">
+
+            <div class="story-category">
+                HEALTHY AGING / GUIDE
+            </div>
+
+            <h3>
+                A Stronger Approach to Healthy Aging
+            </h3>
+
+            <a
+                href="content/a-stronger-approach-to-healthy-aging-2026-09-15-144642.html"
+            >
+                Read article
+                <span>↗</span>
+            </a>
+
+        </div>
+
+    </article>
+
+    
+
+    </div>
 
 </section>
 
-<footer>
 
-© 2026 StrongerYears · Educational content only.
-Not medical advice.
+<section class="brand-section">
+
+    <div class="brand-inner">
+
+        <div>
+
+            <div class="brand-label">
+                WHAT WE COVER
+            </div>
+
+            <h2>
+                Simple ideas.<br>
+                Better habits.
+            </h2>
+
+        </div>
+
+
+        <div>
+
+            <p class="brand-copy">
+
+                StrongerYears explores the everyday choices
+                that can support an active, independent
+                lifestyle — from nutrition and recovery
+                to strength and healthy aging.
+
+            </p>
+
+            <div class="pill-row">
+
+                <div class="pill">
+                    STRENGTH
+                </div>
+
+                <div class="pill">
+                    NUTRITION
+                </div>
+
+                <div class="pill">
+                    RECOVERY
+                </div>
+
+                <div class="pill">
+                    ACTIVE LIVING
+                </div>
+
+                <div class="pill">
+                    HEALTHY AGING
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</section>
+
+
+<section class="disclosure">
+
+    <div class="disclosure-title">
+        Affiliate Disclosure
+    </div>
+
+    <div>
+        I may earn a commission if you buy through links on this page, at no extra cost to you.
+    </div>
+
+</section>
+
+
+<footer class="footer">
+
+    <strong>
+        StrongerYears
+    </strong>
+
+    Practical information for healthy aging and active living.
+
+    <br><br>
+
+    © 2026 StrongerYears
 
 </footer>
 
+
 </body>
+
 </html>
