@@ -13,15 +13,12 @@ You are an ethical affiliate content strategist targeting US buyers.
 
 Create ONE genuinely useful, original article for a premium wellness website.
 
-Topic:
-Healthy aging, maintaining muscle, strength, recovery, energy and active living.
-
-Affiliate product:
-Advanced Amino Formula by Advanced Bionutritionals
+Choose a useful buyer-intent topic related to:
+healthy aging, maintaining muscle, strength, recovery, energy,
+nutrition, active living, or choosing an amino-acid supplement.
 
 Audience:
-US adults interested in healthy aging, maintaining muscle, strength,
-recovery, energy and active living.
+US adults interested in healthy aging and active living.
 
 Rules:
 - Do not make disease treatment or cure claims.
@@ -31,11 +28,11 @@ Rules:
 - Do not use the product or brand name in the SEO title.
 - Do not use keyword stuffing.
 - Give genuinely useful information.
-- Explain practical considerations when choosing an amino-acid supplement.
+- Explain practical considerations.
 - Include a natural recommendation section.
 - Use the product name only in the recommendation section.
 - Do not create fake urgency, fake scarcity or fake discounts.
-- Include this exact affiliate disclosure:
+- Include this exact disclosure:
 "I may earn a commission if you buy through links on this page, at no extra cost to you."
 
 Return ONLY Markdown.
@@ -83,7 +80,6 @@ article = response.json()["choices"][0]["message"]["content"].strip()
 def markdown_to_html(markdown_text):
     lines = markdown_text.splitlines()
     output = []
-
     in_list = False
 
     for line in lines:
@@ -115,15 +111,6 @@ def markdown_to_html(markdown_text):
             text = html.escape(line[2:].strip())
             output.append(f"<li>{text}</li>")
 
-        elif re.match(r"^\d+\.\s+", line):
-            if not in_list:
-                output.append("<ol>")
-                in_list = True
-
-            text = re.sub(r"^\d+\.\s+", "", line)
-            text = html.escape(text)
-            output.append(f"<li>{text}</li>")
-
         else:
             if in_list:
                 output.append("</ul>")
@@ -147,7 +134,6 @@ def markdown_to_html(markdown_text):
 
 article_html = markdown_to_html(article)
 
-
 title_match = re.search(
     r"<h1>(.*?)</h1>",
     article_html,
@@ -159,9 +145,13 @@ if title_match:
 else:
     page_title = "Healthy Aging & Active Living"
 
-
 timestamp = datetime.now().strftime("%Y-%m-%d-%H%M%S")
-slug = re.sub(r"[^a-z0-9]+", "-", page_title.lower()).strip("-")
+
+slug = re.sub(
+    r"[^a-z0-9]+",
+    "-",
+    page_title.lower()
+).strip("-")
 
 if not slug:
     slug = f"article-{timestamp}"
@@ -170,10 +160,10 @@ os.makedirs("content", exist_ok=True)
 
 filename = f"content/{slug}-{timestamp}.html"
 
-
 html_page = f"""<!DOCTYPE html>
 <html lang="en">
 <head>
+
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
@@ -184,154 +174,158 @@ content="Practical information about healthy aging, muscle support,
 strength, recovery, energy and active living.">
 
 <style>
+
 * {{
-    box-sizing: border-box;
+box-sizing:border-box;
 }}
 
 body {{
-    margin: 0;
-    font-family: Arial, Helvetica, sans-serif;
-    background: #f7faf8;
-    color: #173b3d;
-    line-height: 1.75;
+margin:0;
+font-family:Arial,Helvetica,sans-serif;
+background:#f7faf8;
+color:#173b3d;
+line-height:1.75;
 }}
 
 header {{
-    background: white;
-    border-bottom: 1px solid #e6eeee;
-    padding: 18px 6%;
+background:white;
+border-bottom:1px solid #e5eeee;
+padding:18px 6%;
 }}
 
 .nav {{
-    max-width: 1100px;
-    margin: auto;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+max-width:1120px;
+margin:auto;
+display:flex;
+justify-content:space-between;
+align-items:center;
 }}
 
 .logo {{
-    font-size: 22px;
-    font-weight: 700;
+font-size:23px;
+font-weight:800;
 }}
 
 .logo span {{
-    color: #23815f;
+color:#23815f;
 }}
 
 nav a {{
-    color: #173b3d;
-    text-decoration: none;
-    margin-left: 24px;
+margin-left:25px;
+text-decoration:none;
+color:#173b3d;
+font-weight:600;
 }}
 
 .hero {{
-    background: linear-gradient(135deg, #e8f3ed, #ffffff);
-    padding: 70px 20px;
+padding:75px 20px;
+background:linear-gradient(135deg,#e8f3ed,#ffffff);
 }}
 
 .hero-inner {{
-    max-width: 900px;
-    margin: auto;
+max-width:900px;
+margin:auto;
 }}
 
 .hero h1 {{
-    font-size: clamp(36px, 6vw, 58px);
-    line-height: 1.1;
-    margin: 0 0 20px;
+font-size:clamp(38px,6vw,64px);
+line-height:1.08;
+margin:20px 0;
+}}
+
+.hero p {{
+font-size:18px;
+color:#596d6d;
 }}
 
 .container {{
-    max-width: 900px;
-    margin: 50px auto;
-    padding: 0 20px;
+max-width:900px;
+margin:55px auto;
+padding:0 20px;
 }}
 
 .article {{
-    background: white;
-    padding: 45px;
-    border-radius: 18px;
-    box-shadow: 0 10px 35px rgba(20,60,60,.07);
+background:white;
+padding:45px;
+border-radius:20px;
+box-shadow:0 12px 40px rgba(20,60,60,.07);
 }}
 
 .article h2 {{
-    margin-top: 42px;
-    font-size: 30px;
-}}
-
-.article h3 {{
-    margin-top: 30px;
-}}
-
-.article ul {{
-    padding-left: 25px;
+margin-top:42px;
+font-size:30px;
 }}
 
 .article li {{
-    margin: 8px 0;
+margin:8px 0;
 }}
 
 .recommend {{
-    margin-top: 45px;
-    padding: 30px;
-    border-radius: 16px;
-    background: #edf7f1;
-    border: 1px solid #d8eadf;
+margin-top:45px;
+padding:30px;
+border-radius:18px;
+background:#edf7f1;
+border:1px solid #d8eadf;
 }}
 
 .cta {{
-    display: inline-block;
-    margin-top: 18px;
-    padding: 14px 24px;
-    background: #23815f;
-    color: white;
-    text-decoration: none;
-    border-radius: 30px;
-    font-weight: 700;
+display:inline-block;
+margin-top:15px;
+padding:14px 25px;
+background:#23815f;
+color:white;
+text-decoration:none;
+border-radius:30px;
+font-weight:700;
 }}
 
 .disclosure {{
-    margin-top: 40px;
-    padding: 20px;
-    background: #f4f6f5;
-    border-radius: 12px;
-    font-size: 14px;
+margin-top:40px;
+padding:20px;
+background:#f4f6f5;
+border-radius:12px;
+font-size:14px;
 }}
 
 footer {{
-    text-align: center;
-    padding: 40px 20px;
-    color: #637879;
-    font-size: 13px;
+text-align:center;
+padding:40px 20px;
+color:#718080;
+font-size:13px;
 }}
 
-@media (max-width: 700px) {{
-    .article {{
-        padding: 25px;
-    }}
-
-    nav {{
-        display: none;
-    }}
+@media(max-width:700px) {{
+.article {{
+padding:25px;
 }}
+}}
+
 </style>
 </head>
 
 <body>
 
 <header>
+
 <div class="nav">
-<div class="logo">Stronger<span>Years</span></div>
+
+<div class="logo">
+Stronger<span>Years</span>
+</div>
 
 <nav>
 <a href="../index.html">Home</a>
 <a href="../articles.html">Articles</a>
 </nav>
+
 </div>
+
 </header>
 
 <section class="hero">
+
 <div class="hero-inner">
+
 <div style="text-transform:uppercase;letter-spacing:2px;font-size:13px;">
 Healthy Aging • Active Living
 </div>
@@ -339,10 +333,12 @@ Healthy Aging • Active Living
 <h1>{html.escape(page_title)}</h1>
 
 <p>
-Practical, easy-to-understand information to help you make
-better decisions about an active and healthy lifestyle.
+Practical information to help you make more informed
+decisions about an active and healthy lifestyle.
 </p>
+
 </div>
+
 </section>
 
 <main class="container">
@@ -386,8 +382,8 @@ at no extra cost to you.
 </main>
 
 <footer>
-© 2026 StrongerYears. Information provided for educational purposes
-and is not medical advice.
+© 2026 StrongerYears · Educational content only.
+Not medical advice.
 </footer>
 
 </body>
@@ -397,4 +393,456 @@ and is not medical advice.
 with open(filename, "w", encoding="utf-8") as f:
     f.write(html_page)
 
-print(f"Professional article page created: {filename}")
+
+# -----------------------------------------
+# AUTOMATIC HOMEPAGE UPDATE
+# -----------------------------------------
+
+articles = []
+
+for file in os.listdir("content"):
+
+    if file.endswith(".html"):
+
+        articles.append(file)
+
+articles.sort(reverse=True)
+
+cards = []
+
+for article_file in articles[:10]:
+
+    article_path = os.path.join("content", article_file)
+
+    try:
+        with open(article_path, "r", encoding="utf-8") as f:
+            content = f.read()
+
+        match = re.search(
+            r"<h1>(.*?)</h1>",
+            content,
+            re.IGNORECASE
+        )
+
+        if match:
+            article_title = re.sub(
+                "<.*?>",
+                "",
+                match.group(1)
+            )
+        else:
+            article_title = article_file
+
+        cards.append(f"""
+<div class="article-card">
+
+<h3>{html.escape(article_title)}</h3>
+
+<p>
+Explore this practical guide from StrongerYears.
+</p>
+
+<a class="read-more"
+href="content/{article_file}">
+Read Full Article →
+</a>
+
+</div>
+""")
+
+    except Exception:
+        continue
+
+
+article_cards = "\n".join(cards)
+
+
+homepage = f"""<!DOCTYPE html>
+
+<html lang="en">
+
+<head>
+
+<meta charset="UTF-8">
+
+<meta name="viewport"
+content="width=device-width, initial-scale=1.0">
+
+<title>
+StrongerYears | Healthy Aging & Active Living
+</title>
+
+<meta name="description"
+content="Practical guides for healthy aging,
+muscle support, nutrition, strength,
+recovery and active living.">
+
+<style>
+
+* {{
+box-sizing:border-box;
+}}
+
+body {{
+margin:0;
+font-family:Arial,Helvetica,sans-serif;
+background:#f7faf8;
+color:#173b3d;
+line-height:1.7;
+}}
+
+header {{
+background:white;
+border-bottom:1px solid #e5eeee;
+padding:18px 6%;
+}}
+
+.nav {{
+max-width:1120px;
+margin:auto;
+display:flex;
+justify-content:space-between;
+align-items:center;
+}}
+
+.logo {{
+font-size:23px;
+font-weight:800;
+}}
+
+.logo span {{
+color:#23815f;
+}}
+
+nav a {{
+margin-left:25px;
+text-decoration:none;
+color:#173b3d;
+font-weight:600;
+}}
+
+.hero {{
+padding:85px 20px;
+background:linear-gradient(135deg,#e8f3ed,#ffffff);
+}}
+
+.hero-inner {{
+max-width:950px;
+margin:auto;
+text-align:center;
+}}
+
+.badge {{
+display:inline-block;
+padding:7px 14px;
+border-radius:30px;
+background:white;
+font-size:13px;
+font-weight:700;
+letter-spacing:1px;
+text-transform:uppercase;
+}}
+
+.hero h1 {{
+font-size:clamp(42px,7vw,70px);
+line-height:1.05;
+margin:22px 0;
+}}
+
+.hero p {{
+max-width:700px;
+margin:auto;
+font-size:19px;
+color:#526969;
+}}
+
+.container {{
+max-width:1120px;
+margin:60px auto;
+padding:0 20px;
+}}
+
+.section-title {{
+text-align:center;
+margin-bottom:35px;
+}}
+
+.section-title h2 {{
+font-size:36px;
+}}
+
+.articles {{
+display:grid;
+grid-template-columns:repeat(2,1fr);
+gap:24px;
+}}
+
+.article-card {{
+background:white;
+padding:32px;
+border-radius:20px;
+box-shadow:0 12px 40px rgba(20,60,60,.08);
+border:1px solid #e4eeee;
+}}
+
+.article-card h3 {{
+font-size:27px;
+margin-top:0;
+}}
+
+.article-card p {{
+color:#596d6d;
+}}
+
+.read-more {{
+display:inline-block;
+margin-top:15px;
+padding:13px 22px;
+border-radius:28px;
+background:#173b3d;
+color:white;
+text-decoration:none;
+font-weight:700;
+}}
+
+.topics {{
+display:grid;
+grid-template-columns:repeat(3,1fr);
+gap:22px;
+}}
+
+.topic {{
+background:white;
+padding:28px;
+border-radius:18px;
+border:1px solid #e5eeee;
+}}
+
+.topic p {{
+color:#637575;
+}}
+
+.cta-section {{
+margin-top:70px;
+padding:55px 30px;
+border-radius:24px;
+background:#edf7f1;
+text-align:center;
+}}
+
+.button {{
+display:inline-block;
+margin-top:20px;
+padding:15px 28px;
+border-radius:30px;
+background:#23815f;
+color:white;
+text-decoration:none;
+font-weight:700;
+}}
+
+.disclosure {{
+max-width:800px;
+margin:45px auto;
+padding:20px;
+background:white;
+border-radius:12px;
+font-size:13px;
+color:#657777;
+text-align:center;
+}}
+
+footer {{
+padding:40px 20px;
+text-align:center;
+color:#718080;
+font-size:13px;
+}}
+
+@media(max-width:750px) {{
+
+nav {{
+display:none;
+}}
+
+.articles,
+.topics {{
+grid-template-columns:1fr;
+}}
+
+}}
+
+</style>
+
+</head>
+
+<body>
+
+<header>
+
+<div class="nav">
+
+<div class="logo">
+Stronger<span>Years</span>
+</div>
+
+<nav>
+<a href="index.html">Home</a>
+<a href="content/{articles[0] if articles else ''}">
+Latest Article
+</a>
+</nav>
+
+</div>
+
+</header>
+
+<section class="hero">
+
+<div class="hero-inner">
+
+<div class="badge">
+Healthy Aging • Active Living
+</div>
+
+<h1>
+Build stronger habits for your later years.
+</h1>
+
+<p>
+Practical, easy-to-understand guides covering
+muscle support, nutrition, recovery, energy
+and active living.
+</p>
+
+</div>
+
+</section>
+
+<section class="container">
+
+<div class="section-title">
+
+<h2>Latest Articles</h2>
+
+<p>
+Useful information designed to help you make
+more informed wellness and lifestyle decisions.
+</p>
+
+</div>
+
+<div class="articles">
+
+{article_cards}
+
+</div>
+
+</section>
+
+<section class="container">
+
+<div class="section-title">
+
+<h2>Explore Our Topics</h2>
+
+<p>
+Simple guides focused on active aging.
+</p>
+
+</div>
+
+<div class="topics">
+
+<div class="topic">
+
+<h3>💪 Muscle & Strength</h3>
+
+<p>
+Practical habits and nutrition considerations
+for maintaining strength and staying active.
+</p>
+
+</div>
+
+<div class="topic">
+
+<h3>🥗 Nutrition</h3>
+
+<p>
+Understand everyday nutrition choices and
+what to consider when evaluating supplements.
+</p>
+
+</div>
+
+<div class="topic">
+
+<h3>🚶 Active Aging</h3>
+
+<p>
+Ideas for supporting an active lifestyle and
+building healthy long-term habits.
+</p>
+
+</div>
+
+</div>
+
+</section>
+
+<section class="container">
+
+<div class="cta-section">
+
+<h2>
+Explore Your Nutrition Options
+</h2>
+
+<p>
+If you're exploring amino-acid supplements as
+part of your nutrition routine, you can learn
+more about one option here.
+</p>
+
+<a class="button"
+href="{AFFILIATE_LINK}"
+rel="nofollow sponsored noopener"
+target="_blank">
+Learn More
+</a>
+
+</div>
+
+<div class="disclosure">
+
+<strong>Affiliate Disclosure</strong>
+
+<br><br>
+
+I may earn a commission if you buy through links
+on this page, at no extra cost to you.
+
+</div>
+
+</section>
+
+<footer>
+
+© 2026 StrongerYears · Educational content only.
+Not medical advice.
+
+</footer>
+
+</body>
+
+</html>
+"""
+
+
+with open("index.html", "w", encoding="utf-8") as f:
+    f.write(homepage)
+
+print(f"Article created: {filename}")
+print("Homepage automatically updated.")
+print(f"Total articles found: {len(articles)}")
