@@ -17,22 +17,20 @@ Audience:
 US adults interested in healthy aging, maintaining muscle, strength,
 recovery, energy and active living.
 
-Goal:
-Create ONE genuinely useful, original article with strong buyer intent.
+Create ONE genuinely useful, original article with buyer intent.
 
 Rules:
-- Do not make disease treatment or cure claims.
-- Do not promise guaranteed results.
+- No disease treatment or cure claims.
+- No guaranteed results.
 - Do not invent studies, reviews, testimonials or statistics.
 - Do not pretend to be a doctor.
 - Do not use the product or brand name in the SEO title.
-- Provide useful information, not keyword stuffing.
-- Naturally explain when an amino-acid supplement may be worth considering.
-- Include a natural product recommendation section.
-- Use the affiliate link only as the CTA.
+- No keyword stuffing.
+- Give practical information.
+- Include a natural recommendation section.
+- Include the affiliate link as the CTA.
 - Include this exact disclosure:
-  "I may earn a commission if you buy through links on this page,
-  at no extra cost to you."
+"I may earn a commission if you buy through links on this page, at no extra cost to you."
 
 Return ONLY the article in Markdown.
 
@@ -74,7 +72,6 @@ response.raise_for_status()
 
 article = response.json()["choices"][0]["message"]["content"]
 
-# Add affiliate CTA
 article += """
 
 ## Learn More
