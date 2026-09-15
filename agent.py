@@ -8,31 +8,103 @@ API_KEY = os.environ["OPENROUTER_API_KEY"]
 
 AFFILIATE_LINK = "https://www.advancedbionutritionals.com/DS24/Advanced-Amino/Muscle-Mass-Loss/HD.htm#aff=Healthy_w0rld"
 
-PROMPT = """
+TOPICS = [
+    "How to maintain muscle and strength as you age",
+    "Practical nutrition habits for active older adults",
+    "What to consider when choosing an amino-acid supplement",
+    "Amino acids and recovery after exercise",
+    "Protein vs amino acids for active aging",
+    "How to support an active lifestyle after 50",
+    "Nutrition considerations for maintaining strength",
+    "Everyday habits that support healthy aging",
+]
+
+
+# -------------------------------------------------
+# FIND PREVIOUS ARTICLES
+# -------------------------------------------------
+
+os.makedirs("content", exist_ok=True)
+
+previous_titles = []
+
+for file in os.listdir("content"):
+    if file.endswith(".html"):
+        try:
+            with open(
+                os.path.join("content", file),
+                "r",
+                encoding="utf-8"
+            ) as f:
+                old_content = f.read()
+
+            matches = re.findall(
+                r"<h1>(.*?)</h1>",
+                old_content,
+                re.IGNORECASE
+            )
+
+            for match in matches:
+                clean_title = re.sub("<.*?>", "", match)
+                previous_titles.append(clean_title)
+
+        except Exception:
+            pass
+
+
+previous_text = "\n".join(previous_titles[-20:])
+
+if not previous_text:
+    previous_text = "No previous articles."
+
+
+# -------------------------------------------------
+# AI PROMPT
+# -------------------------------------------------
+
+PROMPT = f"""
 You are an ethical affiliate content strategist targeting US buyers.
 
 Create ONE genuinely useful, original article for a premium wellness website.
 
-Choose a useful buyer-intent topic related to:
-healthy aging, maintaining muscle, strength, recovery, energy,
-nutrition, active living, or choosing an amino-acid supplement.
+Choose ONE topic from this list:
 
-Audience:
-US adults interested in healthy aging and active living.
+1. {TOPICS[0]}
+2. {TOPICS[1]}
+3. {TOPICS[2]}
+4. {TOPICS[3]}
+5. {TOPICS[4]}
+6. {TOPICS[5]}
+7. {TOPICS[6]}
+8. {TOPICS[7]}
 
-Rules:
+PREVIOUS ARTICLE TITLES:
+{previous_text}
+
+IMPORTANT:
+- Choose a topic and angle substantially different from previous articles.
+- Do not repeat previous titles.
+- Do not repeat the same main argument.
+- Target US readers.
+- Write for adults interested in healthy aging and active living.
+- Give genuinely useful information.
+- Include practical tips.
+- Have natural buyer intent without being pushy.
 - Do not make disease treatment or cure claims.
 - Do not promise guaranteed results.
-- Do not invent studies, reviews, testimonials or statistics.
+- Do not invent studies, statistics, reviews or testimonials.
 - Do not pretend to be a doctor.
 - Do not use the product or brand name in the SEO title.
-- Do not use keyword stuffing.
-- Give genuinely useful information.
-- Explain practical considerations.
-- Include a natural recommendation section.
-- Use the product name only in the recommendation section.
-- Do not create fake urgency, fake scarcity or fake discounts.
+- Do not keyword stuff.
+- Do not create fake urgency.
+- Do not create fake scarcity.
+- Do not create fake discounts.
+- Do not create fake testimonials.
+- Do not make unsupported medical claims.
+- Mention Advanced Amino Formula only in the recommendation section.
+- Do not claim that the product treats or cures a disease.
 - Include this exact disclosure:
+
 "I may earn a commission if you buy through links on this page, at no extra cost to you."
 
 Return ONLY Markdown.
@@ -43,7 +115,9 @@ Structure:
 
 ## Introduction
 
-## Main useful sections
+## Main Guide
+
+## Practical Tips
 
 ## What to Consider Before Choosing a Supplement
 
@@ -53,6 +127,11 @@ Structure:
 
 ## Affiliate Disclosure
 """
+
+
+# -------------------------------------------------
+# CALL OPENROUTER
+# -------------------------------------------------
 
 response = requests.post(
     "https://openrouter.ai/api/v1/chat/completions",
@@ -74,46 +153,87 @@ response = requests.post(
 
 response.raise_for_status()
 
-article = response.json()["choices"][0]["message"]["content"].strip()
+data = response.json()
 
+article = data["choices"][0]["message"]["content"].strip()
+
+
+# -------------------------------------------------
+# MARKDOWN → HTML
+# -------------------------------------------------
 
 def markdown_to_html(markdown_text):
+
     lines = markdown_text.splitlines()
+
     output = []
+
     in_list = False
 
     for line in lines:
+
         line = line.strip()
 
         if not line:
+
             if in_list:
                 output.append("</ul>")
                 in_list = False
+
             continue
 
         if line.startswith("# "):
-            title = html.escape(line[2:].strip())
-            output.append(f"<h1>{title}</h1>")
+
+            title = html.escape(
+                line[2:].strip()
+            )
+
+            output.append(
+                f"<h1>{title}</h1>"
+            )
 
         elif line.startswith("## "):
-            heading = html.escape(line[3:].strip())
-            output.append(f"<h2>{heading}</h2>")
+
+            heading = html.escape(
+                line[3:].strip()
+            )
+
+            output.append(
+                f"<h2>{heading}</h2>"
+            )
 
         elif line.startswith("### "):
-            heading = html.escape(line[4:].strip())
-            output.append(f"<h3>{heading}</h3>")
+
+            heading = html.escape(
+                line[4:].strip()
+            )
+
+            output.append(
+                f"<h3>{heading}</h3>"
+            )
 
         elif line.startswith("- "):
+
             if not in_list:
+
                 output.append("<ul>")
+
                 in_list = True
 
-            text = html.escape(line[2:].strip())
-            output.append(f"<li>{text}</li>")
+            text = html.escape(
+                line[2:].strip()
+            )
+
+            output.append(
+                f"<li>{text}</li>"
+            )
 
         else:
+
             if in_list:
+
                 output.append("</ul>")
+
                 in_list = False
 
             text = html.escape(line)
@@ -124,7 +244,9 @@ def markdown_to_html(markdown_text):
                 text
             )
 
-            output.append(f"<p>{text}</p>")
+            output.append(
+                f"<p>{text}</p>"
+            )
 
     if in_list:
         output.append("</ul>")
@@ -134,6 +256,11 @@ def markdown_to_html(markdown_text):
 
 article_html = markdown_to_html(article)
 
+
+# -------------------------------------------------
+# GET ARTICLE TITLE
+# -------------------------------------------------
+
 title_match = re.search(
     r"<h1>(.*?)</h1>",
     article_html,
@@ -141,11 +268,51 @@ title_match = re.search(
 )
 
 if title_match:
-    page_title = re.sub("<.*?>", "", title_match.group(1))
+
+    page_title = re.sub(
+        "<.*?>",
+        "",
+        title_match.group(1)
+    )
+
 else:
+
     page_title = "Healthy Aging & Active Living"
 
-timestamp = datetime.now().strftime("%Y-%m-%d-%H%M%S")
+
+# -------------------------------------------------
+# DUPLICATE TITLE CHECK
+# -------------------------------------------------
+
+normalized_new_title = re.sub(
+    r"[^a-z0-9]+",
+    " ",
+    page_title.lower()
+).strip()
+
+for old_title in previous_titles:
+
+    normalized_old_title = re.sub(
+        r"[^a-z0-9]+",
+        " ",
+        old_title.lower()
+    ).strip()
+
+    if normalized_new_title == normalized_old_title:
+
+        raise RuntimeError(
+            "Duplicate article title detected. "
+            "Stopping instead of publishing duplicate content."
+        )
+
+
+# -------------------------------------------------
+# CREATE SAFE FILENAME
+# -------------------------------------------------
+
+timestamp = datetime.now().strftime(
+    "%Y-%m-%d-%H%M%S"
+)
 
 slug = re.sub(
     r"[^a-z0-9]+",
@@ -154,24 +321,39 @@ slug = re.sub(
 ).strip("-")
 
 if not slug:
+
     slug = f"article-{timestamp}"
 
-os.makedirs("content", exist_ok=True)
 
-filename = f"content/{slug}-{timestamp}.html"
+filename = (
+    f"content/"
+    f"{slug}-"
+    f"{timestamp}.html"
+)
+
+
+# -------------------------------------------------
+# CREATE ARTICLE PAGE
+# -------------------------------------------------
 
 html_page = f"""<!DOCTYPE html>
+
 <html lang="en">
+
 <head>
 
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>{html.escape(page_title)} | StrongerYears</title>
+<meta name="viewport"
+content="width=device-width, initial-scale=1.0">
+
+<title>
+{html.escape(page_title)} | StrongerYears
+</title>
 
 <meta name="description"
-content="Practical information about healthy aging, muscle support,
-strength, recovery, energy and active living.">
+content="Practical information about healthy aging,
+muscle support, strength, recovery, energy and active living.">
 
 <style>
 
@@ -219,7 +401,11 @@ font-weight:600;
 
 .hero {{
 padding:75px 20px;
-background:linear-gradient(135deg,#e8f3ed,#ffffff);
+background:linear-gradient(
+135deg,
+#e8f3ed,
+#ffffff
+);
 }}
 
 .hero-inner {{
@@ -248,7 +434,8 @@ padding:0 20px;
 background:white;
 padding:45px;
 border-radius:20px;
-box-shadow:0 12px 40px rgba(20,60,60,.07);
+box-shadow:
+0 12px 40px rgba(20,60,60,.07);
 }}
 
 .article h2 {{
@@ -295,12 +482,15 @@ font-size:13px;
 }}
 
 @media(max-width:700px) {{
+
 .article {{
 padding:25px;
 }}
+
 }}
 
 </style>
+
 </head>
 
 <body>
@@ -314,8 +504,11 @@ Stronger<span>Years</span>
 </div>
 
 <nav>
-<a href="../index.html">Home</a>
-<a href="../articles.html">Articles</a>
+
+<a href="../index.html">
+Home
+</a>
+
 </nav>
 
 </div>
@@ -326,15 +519,24 @@ Stronger<span>Years</span>
 
 <div class="hero-inner">
 
-<div style="text-transform:uppercase;letter-spacing:2px;font-size:13px;">
+<div style="
+text-transform:uppercase;
+letter-spacing:2px;
+font-size:13px;
+">
+
 Healthy Aging • Active Living
+
 </div>
 
-<h1>{html.escape(page_title)}</h1>
+<h1>
+{html.escape(page_title)}
+</h1>
 
 <p>
-Practical information to help you make more informed
-decisions about an active and healthy lifestyle.
+Practical information to help you make more
+informed decisions about an active and
+healthy lifestyle.
 </p>
 
 </div>
@@ -349,30 +551,37 @@ decisions about an active and healthy lifestyle.
 
 <div class="recommend">
 
-<h2>Recommended Option</h2>
+<h2>
+Recommended Option
+</h2>
 
 <p>
-If you are considering an amino-acid formula as part of your
-nutrition routine, you can learn more about Advanced Amino Formula
-from Advanced Bionutritionals.
+If you are considering an amino-acid formula
+as part of your nutrition routine, you can learn
+more about Advanced Amino Formula from
+Advanced Bionutritionals.
 </p>
 
 <a class="cta"
 href="{AFFILIATE_LINK}"
 rel="nofollow sponsored noopener"
 target="_blank">
+
 Learn More
+
 </a>
 
 </div>
 
 <div class="disclosure">
 
-<strong>Affiliate Disclosure</strong>
+<strong>
+Affiliate Disclosure
+</strong>
 
 <p>
-I may earn a commission if you buy through links on this page,
-at no extra cost to you.
+I may earn a commission if you buy through
+links on this page, at no extra cost to you.
 </p>
 
 </div>
@@ -382,21 +591,30 @@ at no extra cost to you.
 </main>
 
 <footer>
+
 © 2026 StrongerYears · Educational content only.
 Not medical advice.
+
 </footer>
 
 </body>
+
 </html>
 """
 
-with open(filename, "w", encoding="utf-8") as f:
+
+with open(
+    filename,
+    "w",
+    encoding="utf-8"
+) as f:
+
     f.write(html_page)
 
 
-# -----------------------------------------
-# AUTOMATIC HOMEPAGE UPDATE
-# -----------------------------------------
+# -------------------------------------------------
+# AUTOMATIC HOMEPAGE
+# -------------------------------------------------
 
 articles = []
 
@@ -406,17 +624,29 @@ for file in os.listdir("content"):
 
         articles.append(file)
 
+
 articles.sort(reverse=True)
+
 
 cards = []
 
 for article_file in articles[:10]:
 
-    article_path = os.path.join("content", article_file)
+    article_path = os.path.join(
+        "content",
+        article_file
+    )
 
     try:
-        with open(article_path, "r", encoding="utf-8") as f:
+
+        with open(
+            article_path,
+            "r",
+            encoding="utf-8"
+        ) as f:
+
             content = f.read()
+
 
         match = re.search(
             r"<h1>(.*?)</h1>",
@@ -424,37 +654,61 @@ for article_file in articles[:10]:
             re.IGNORECASE
         )
 
+
         if match:
+
             article_title = re.sub(
                 "<.*?>",
                 "",
                 match.group(1)
             )
+
         else:
+
             article_title = article_file
 
-        cards.append(f"""
+
+        cards.append(
+            f"""
 <div class="article-card">
 
-<h3>{html.escape(article_title)}</h3>
+<h3>
+{html.escape(article_title)}
+</h3>
 
 <p>
-Explore this practical guide from StrongerYears.
+Explore this practical guide from
+StrongerYears.
 </p>
 
 <a class="read-more"
 href="content/{article_file}">
+
 Read Full Article →
+
 </a>
 
 </div>
-""")
+"""
+        )
 
     except Exception:
+
         continue
 
 
 article_cards = "\n".join(cards)
+
+
+# -------------------------------------------------
+# HOMEPAGE HTML
+# -------------------------------------------------
+
+latest_link = (
+    f"content/{articles[0]}"
+    if articles
+    else "#"
+)
 
 
 homepage = f"""<!DOCTYPE html>
@@ -523,7 +777,11 @@ font-weight:600;
 
 .hero {{
 padding:85px 20px;
-background:linear-gradient(135deg,#e8f3ed,#ffffff);
+background:linear-gradient(
+135deg,
+#e8f3ed,
+#ffffff
+);
 }}
 
 .hero-inner {{
@@ -573,7 +831,8 @@ font-size:36px;
 
 .articles {{
 display:grid;
-grid-template-columns:repeat(2,1fr);
+grid-template-columns:
+repeat(2,1fr);
 gap:24px;
 }}
 
@@ -581,7 +840,8 @@ gap:24px;
 background:white;
 padding:32px;
 border-radius:20px;
-box-shadow:0 12px 40px rgba(20,60,60,.08);
+box-shadow:
+0 12px 40px rgba(20,60,60,.08);
 border:1px solid #e4eeee;
 }}
 
@@ -607,7 +867,8 @@ font-weight:700;
 
 .topics {{
 display:grid;
-grid-template-columns:repeat(3,1fr);
+grid-template-columns:
+repeat(3,1fr);
 gap:22px;
 }}
 
@@ -687,10 +948,15 @@ Stronger<span>Years</span>
 </div>
 
 <nav>
-<a href="index.html">Home</a>
-<a href="content/{articles[0] if articles else ''}">
+
+<a href="index.html">
+Home
+</a>
+
+<a href="{latest_link}">
 Latest Article
 </a>
+
 </nav>
 
 </div>
@@ -723,7 +989,9 @@ and active living.
 
 <div class="section-title">
 
-<h2>Latest Articles</h2>
+<h2>
+Latest Articles
+</h2>
 
 <p>
 Useful information designed to help you make
@@ -744,7 +1012,9 @@ more informed wellness and lifestyle decisions.
 
 <div class="section-title">
 
-<h2>Explore Our Topics</h2>
+<h2>
+Explore Our Topics
+</h2>
 
 <p>
 Simple guides focused on active aging.
@@ -756,7 +1026,9 @@ Simple guides focused on active aging.
 
 <div class="topic">
 
-<h3>💪 Muscle & Strength</h3>
+<h3>
+💪 Muscle & Strength
+</h3>
 
 <p>
 Practical habits and nutrition considerations
@@ -767,7 +1039,9 @@ for maintaining strength and staying active.
 
 <div class="topic">
 
-<h3>🥗 Nutrition</h3>
+<h3>
+🥗 Nutrition
+</h3>
 
 <p>
 Understand everyday nutrition choices and
@@ -778,7 +1052,9 @@ what to consider when evaluating supplements.
 
 <div class="topic">
 
-<h3>🚶 Active Aging</h3>
+<h3>
+🚶 Active Aging
+</h3>
 
 <p>
 Ideas for supporting an active lifestyle and
@@ -809,19 +1085,23 @@ more about one option here.
 href="{AFFILIATE_LINK}"
 rel="nofollow sponsored noopener"
 target="_blank">
+
 Learn More
+
 </a>
 
 </div>
 
 <div class="disclosure">
 
-<strong>Affiliate Disclosure</strong>
+<strong>
+Affiliate Disclosure
+</strong>
 
 <br><br>
 
-I may earn a commission if you buy through links
-on this page, at no extra cost to you.
+I may earn a commission if you buy through
+links on this page, at no extra cost to you.
 
 </div>
 
@@ -840,9 +1120,27 @@ Not medical advice.
 """
 
 
-with open("index.html", "w", encoding="utf-8") as f:
+with open(
+    "index.html",
+    "w",
+    encoding="utf-8"
+) as f:
+
     f.write(homepage)
 
-print(f"Article created: {filename}")
-print("Homepage automatically updated.")
-print(f"Total articles found: {len(articles)}")
+
+print(
+    f"Article created: {filename}"
+)
+
+print(
+    "Homepage automatically updated."
+)
+
+print(
+    f"Previous articles found: {len(previous_titles)}"
+)
+
+print(
+    f"Total articles now: {len(articles)}"
+)
