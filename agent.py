@@ -4,37 +4,52 @@ from datetime import datetime
 
 API_KEY = os.environ["OPENROUTER_API_KEY"]
 
-prompt = """
-You are an ethical affiliate marketing content planner.
+PROMPT = """
+You are an ethical affiliate content strategist targeting US buyers.
 
-Product:
+Affiliate product:
 Advanced Amino Formula by Advanced Bionutritionals
 
 Affiliate link:
 https://www.advancedbionutritionals.com/DS24/Advanced-Amino/Muscle-Mass-Loss/HD.htm#aff=Healthy_w0rld
 
-Target audience:
-US adults interested in healthy aging, maintaining muscle, strength, recovery and energy.
+Audience:
+US adults interested in healthy aging, maintaining muscle, strength,
+recovery, energy and active living.
 
-Create ONE useful, original article topic with strong buyer intent.
+Goal:
+Create ONE genuinely useful, original article with strong buyer intent.
 
 Rules:
 - Do not make disease treatment or cure claims.
-- Do not make guaranteed results claims.
-- Do not invent reviews, testimonials or scientific studies.
-- Do not use the product/brand name in the title.
-- Give genuinely useful information, not spam.
-- Include a natural place where the affiliate product can be mentioned.
-- Include this disclosure:
-  "I may earn a commission if you buy through links on this page, at no extra cost to you."
+- Do not promise guaranteed results.
+- Do not invent studies, reviews, testimonials or statistics.
+- Do not pretend to be a doctor.
+- Do not use the product or brand name in the SEO title.
+- Provide useful information, not keyword stuffing.
+- Naturally explain when an amino-acid supplement may be worth considering.
+- Include a natural product recommendation section.
+- Use the affiliate link only as the CTA.
+- Include this exact disclosure:
+  "I may earn a commission if you buy through links on this page,
+  at no extra cost to you."
 
-Return:
-1. SEO title
-2. Search intent
-3. Short article outline
-4. Full article around 700-900 words
-5. Suggested affiliate CTA
-6. Affiliate disclosure
+Return ONLY the article in Markdown.
+
+Structure:
+# SEO Title
+
+## Introduction
+
+## Main useful sections
+
+## What to consider before choosing a supplement
+
+## Recommended option
+
+## Conclusion
+
+## Affiliate Disclosure
 """
 
 response = requests.post(
@@ -48,7 +63,7 @@ response = requests.post(
         "messages": [
             {
                 "role": "user",
-                "content": prompt
+                "content": PROMPT
             }
         ],
     },
@@ -57,12 +72,27 @@ response = requests.post(
 
 response.raise_for_status()
 
-content = response.json()["choices"][0]["message"]["content"]
+article = response.json()["choices"][0]["message"]["content"]
 
-filename = f"content-{datetime.now().strftime('%Y-%m-%d-%H%M%S')}.md"
+# Add affiliate CTA
+article += """
+
+## Learn More
+
+If you want to learn more about the recommended amino-acid formula,
+you can check the official product page here:
+
+[Learn more about the formula](https://www.advancedbionutritionals.com/DS24/Advanced-Amino/Muscle-Mass-Loss/HD.htm#aff=Healthy_w0rld)
+
+**Affiliate disclosure:** I may earn a commission if you buy through links
+on this page, at no extra cost to you.
+"""
+
+os.makedirs("content", exist_ok=True)
+
+filename = f"content/article-{datetime.now().strftime('%Y-%m-%d-%H%M%S')}.md"
 
 with open(filename, "w", encoding="utf-8") as f:
-    f.write(content)
+    f.write(article)
 
-print(f"Created: {filename}")
-print(content)
+print(f"Article created: {filename}")
