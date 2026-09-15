@@ -10,7 +10,7 @@ response = requests.post(
         "Content-Type": "application/json",
     },
     json={
-        "model": "qwen/qwen3-14b:free",
+        "model": "openrouter/free",
         "messages": [
             {
                 "role": "user",
@@ -22,4 +22,5 @@ response = requests.post(
 )
 
 response.raise_for_status()
+
 print(response.json()["choices"][0]["message"]["content"])
