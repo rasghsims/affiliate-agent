@@ -1,935 +1,1255 @@
 import os
-import requests
-import html
 import re
+import time
+import html
+import requests
 from datetime import datetime
+
+# ============================================================
+# CONFIG
+# ============================================================
 
 API_KEY = os.environ["OPENROUTER_API_KEY"]
 
-AFFILIATE_LINK = "https://www.advancedbionutritionals.com/DS24/Advanced-Amino/Muscle-Mass-Loss/HD.htm#aff=Healthy_w0rld"
+AFFILIATE_LINK = (
+    "https://www.advancedbionutritionals.com/DS24/Advanced-Amino/"
+    "Muscle-Mass-Loss/HD.htm#aff=Healthy_w0rld"
+)
 
+SITE_NAME = "StrongerYears"
+
+DISCLOSURE = (
+    "I may earn a commission if you buy through links on this page, "
+    "at no extra cost to you."
+)
+
+# Topics rotate automatically.
 TOPICS = [
-    "How to maintain muscle and strength as you age",
-    "Practical nutrition habits for active older adults",
-    "What to consider when choosing an amino-acid supplement",
-    "Amino acids and recovery after exercise",
-    "Protein vs amino acids for active aging",
-    "How to support an active lifestyle after 50",
-    "Nutrition considerations for maintaining strength",
-    "Everyday habits that support healthy aging",
+    "How to maintain muscle strength as you get older",
+    "Best ways to support strength and recovery after 50",
+    "How protein and amino acids fit into healthy aging",
+    "Simple habits for maintaining an active lifestyle as you age",
+    "What to consider when choosing a muscle-support supplement",
+    "How older adults can support strength and daily energy",
+    "A practical guide to maintaining muscle while aging",
+    "How nutrition supports an active lifestyle after 50",
+    "What essential amino acids are and why people use them",
+    "How to build a simple healthy-aging nutrition routine",
 ]
 
+CONTENT_DIR = "content"
 
-# -------------------------------------------------
-# FIND PREVIOUS ARTICLES
-# -------------------------------------------------
+os.makedirs(CONTENT_DIR, exist_ok=True)
 
-os.makedirs("content", exist_ok=True)
 
-previous_titles = []
+# ============================================================
+# HELPERS
+# ============================================================
 
-for file in os.listdir("content"):
-    if file.endswith(".html"):
+def clean_title(title):
+    """Clean an AI-generated title."""
+    title = re.sub(r"<[^>]+>", "", title)
+    title = title.replace("#", "")
+    title = title.strip()
+    return title
+
+
+def slugify(text):
+    """Convert title into a clean URL slug."""
+    text = text.lower()
+    text = re.sub(r"[^a-z0-9\s-]", "", text)
+    text = re.sub(r"\s+", "-", text)
+    text = re.sub(r"-+", "-", text)
+    return text.strip("-")[:90]
+
+
+def get_existing_titles():
+    """Read titles from existing article HTML files."""
+    titles = []
+
+    for filename in os.listdir(CONTENT_DIR):
+
+        if not filename.endswith(".html"):
+            continue
+
+        filepath = os.path.join(CONTENT_DIR, filename)
+
         try:
-            with open(
-                os.path.join("content", file),
-                "r",
-                encoding="utf-8"
-            ) as f:
-                old_content = f.read()
+            with open(filepath, "r", encoding="utf-8") as f:
+                content = f.read()
 
             matches = re.findall(
-                r"<h1>(.*?)</h1>",
-                old_content,
-                re.IGNORECASE
+                r"<h1[^>]*>(.*?)</h1>",
+                content,
+                flags=re.IGNORECASE | re.DOTALL
             )
 
             for match in matches:
-                clean_title = re.sub("<.*?>", "", match)
-                previous_titles.append(clean_title)
+                title = re.sub(r"<[^>]+>", "", match)
+                title = html.unescape(title).strip()
 
-        except Exception:
-            pass
+                if title:
+                    titles.append(title)
 
+        except Exception as e:
+            print(f"Could not read {filename}: {e}")
 
-previous_text = "\n".join(previous_titles[-20:])
+    return titles
 
-if not previous_text:
-    previous_text = "No previous articles."
-
-
-# -------------------------------------------------
-# AI PROMPT
-# -------------------------------------------------
-
-PROMPT = f"""
-You are an ethical affiliate content strategist targeting US buyers.
-
-Create ONE genuinely useful, original article for a premium wellness website.
-
-Choose ONE topic from this list:
-
-1. {TOPICS[0]}
-2. {TOPICS[1]}
-3. {TOPICS[2]}
-4. {TOPICS[3]}
-5. {TOPICS[4]}
-6. {TOPICS[5]}
-7. {TOPICS[6]}
-8. {TOPICS[7]}
-
-PREVIOUS ARTICLE TITLES:
-{previous_text}
-
-IMPORTANT:
-- Choose a topic and angle substantially different from previous articles.
-- Do not repeat previous titles.
-- Do not repeat the same main argument.
-- Target US readers.
-- Write for adults interested in healthy aging and active living.
-- Give genuinely useful information.
-- Include practical tips.
-- Have natural buyer intent without being pushy.
-- Do not make disease treatment or cure claims.
-- Do not promise guaranteed results.
-- Do not invent studies, statistics, reviews or testimonials.
-- Do not pretend to be a doctor.
-- Do not use the product or brand name in the SEO title.
-- Do not keyword stuff.
-- Do not create fake urgency.
-- Do not create fake scarcity.
-- Do not create fake discounts.
-- Do not create fake testimonials.
-- Do not make unsupported medical claims.
-- Mention Advanced Amino Formula only in the recommendation section.
-- Do not claim that the product treats or cures a disease.
-- Include this exact disclosure:
-
-"I may earn a commission if you buy through links on this page, at no extra cost to you."
-
-Return ONLY Markdown.
-
-Structure:
-
-# SEO Title
-
-## Introduction
-
-## Main Guide
-
-## Practical Tips
-
-## What to Consider Before Choosing a Supplement
-
-## Recommended Option
-
-## Conclusion
-
-## Affiliate Disclosure
-"""
-
-
-# -------------------------------------------------
-# CALL OPENROUTER
-# -------------------------------------------------
-
-response = requests.post(
-    "https://openrouter.ai/api/v1/chat/completions",
-    headers={
-        "Authorization": f"Bearer {API_KEY}",
-        "Content-Type": "application/json",
-    },
-    json={
-        "model": "openrouter/free",
-        "messages": [
-            {
-                "role": "user",
-                "content": PROMPT
-            }
-        ],
-    },
-    timeout=120,
-)
-
-response.raise_for_status()
-
-data = response.json()
-
-article = data["choices"][0]["message"]["content"].strip()
-
-
-# -------------------------------------------------
-# MARKDOWN → HTML
-# -------------------------------------------------
 
 def markdown_to_html(markdown_text):
+    """
+    Basic Markdown -> HTML converter.
+    Designed for the controlled article format generated by the AI.
+    """
 
     lines = markdown_text.splitlines()
 
     output = []
 
-    in_list = False
+    in_ul = False
+    paragraph = []
 
-    for line in lines:
+    def flush_paragraph():
+        nonlocal paragraph
 
-        line = line.strip()
+        if paragraph:
+            text = " ".join(x.strip() for x in paragraph).strip()
+
+            if text:
+                output.append(f"<p>{text}</p>")
+
+            paragraph = []
+
+    for raw_line in lines:
+
+        line = raw_line.strip()
 
         if not line:
+            flush_paragraph()
 
-            if in_list:
+            if in_ul:
                 output.append("</ul>")
-                in_list = False
+                in_ul = False
 
             continue
 
+        # H1
         if line.startswith("# "):
 
-            title = html.escape(
-                line[2:].strip()
-            )
+            flush_paragraph()
 
-            output.append(
-                f"<h1>{title}</h1>"
-            )
-
-        elif line.startswith("## "):
-
-            heading = html.escape(
-                line[3:].strip()
-            )
-
-            output.append(
-                f"<h2>{heading}</h2>"
-            )
-
-        elif line.startswith("### "):
-
-            heading = html.escape(
-                line[4:].strip()
-            )
-
-            output.append(
-                f"<h3>{heading}</h3>"
-            )
-
-        elif line.startswith("- "):
-
-            if not in_list:
-
-                output.append("<ul>")
-
-                in_list = True
-
-            text = html.escape(
-                line[2:].strip()
-            )
-
-            output.append(
-                f"<li>{text}</li>"
-            )
-
-        else:
-
-            if in_list:
-
+            if in_ul:
                 output.append("</ul>")
-
-                in_list = False
-
-            text = html.escape(line)
-
-            text = re.sub(
-                r"\*\*(.*?)\*\*",
-                r"<strong>\1</strong>",
-                text
-            )
+                in_ul = False
 
             output.append(
-                f"<p>{text}</p>"
+                f"<h1>{line[2:].strip()}</h1>"
             )
 
-    if in_list:
+            continue
+
+        # H2
+        if line.startswith("## "):
+
+            flush_paragraph()
+
+            if in_ul:
+                output.append("</ul>")
+                in_ul = False
+
+            output.append(
+                f"<h2>{line[3:].strip()}</h2>"
+            )
+
+            continue
+
+        # H3
+        if line.startswith("### "):
+
+            flush_paragraph()
+
+            if in_ul:
+                output.append("</ul>")
+                in_ul = False
+
+            output.append(
+                f"<h3>{line[4:].strip()}</h3>"
+            )
+
+            continue
+
+        # Bullet
+        if line.startswith("- "):
+
+            flush_paragraph()
+
+            if not in_ul:
+                output.append("<ul>")
+                in_ul = True
+
+            output.append(
+                f"<li>{line[2:].strip()}</li>"
+            )
+
+            continue
+
+        # Bold-only disclosure etc.
+        line = re.sub(
+            r"\*\*(.*?)\*\*",
+            r"<strong>\1</strong>",
+            line
+        )
+
+        # Inline links
+        line = re.sub(
+            r"\[(.*?)\]\((.*?)\)",
+            r'<a href="\2" target="_blank" rel="nofollow sponsored noopener">\1</a>',
+            line
+        )
+
+        paragraph.append(line)
+
+    flush_paragraph()
+
+    if in_ul:
         output.append("</ul>")
 
     return "\n".join(output)
 
 
-article_html = markdown_to_html(article)
-
-
-# -------------------------------------------------
-# GET ARTICLE TITLE
-# -------------------------------------------------
-
-title_match = re.search(
-    r"<h1>(.*?)</h1>",
-    article_html,
-    re.IGNORECASE
-)
-
-if title_match:
-
-    page_title = re.sub(
-        "<.*?>",
-        "",
-        title_match.group(1)
+def extract_h1(article_markdown):
+    """Get the first H1 title."""
+    match = re.search(
+        r"^#\s+(.+)$",
+        article_markdown,
+        flags=re.MULTILINE
     )
 
-else:
+    if match:
+        return clean_title(match.group(1))
 
-    page_title = "Healthy Aging & Active Living"
-
-
-# -------------------------------------------------
-# DUPLICATE TITLE CHECK
-# -------------------------------------------------
-
-normalized_new_title = re.sub(
-    r"[^a-z0-9]+",
-    " ",
-    page_title.lower()
-).strip()
-
-for old_title in previous_titles:
-
-    normalized_old_title = re.sub(
-        r"[^a-z0-9]+",
-        " ",
-        old_title.lower()
-    ).strip()
-
-    if normalized_new_title == normalized_old_title:
-
-        raise RuntimeError(
-            "Duplicate article title detected. "
-            "Stopping instead of publishing duplicate content."
-        )
+    return "Healthy Aging & Active Living Guide"
 
 
-# -------------------------------------------------
-# CREATE SAFE FILENAME
-# -------------------------------------------------
+# ============================================================
+# CHOOSE TOPIC
+# ============================================================
 
-timestamp = datetime.now().strftime(
-    "%Y-%m-%d-%H%M%S"
+existing_titles = get_existing_titles()
+
+topic_index = len(existing_titles) % len(TOPICS)
+
+selected_topic = TOPICS[topic_index]
+
+print(f"Selected topic: {selected_topic}")
+print(f"Existing articles: {len(existing_titles)}")
+
+
+# ============================================================
+# AI PROMPT
+# ============================================================
+
+previous_titles_text = "\n".join(
+    f"- {title}"
+    for title in existing_titles[-20:]
 )
 
-slug = re.sub(
-    r"[^a-z0-9]+",
-    "-",
-    page_title.lower()
-).strip("-")
-
-if not slug:
-
-    slug = f"article-{timestamp}"
-
-
-filename = (
-    f"content/"
-    f"{slug}-"
-    f"{timestamp}.html"
-)
-
-
-# -------------------------------------------------
-# CREATE ARTICLE PAGE
-# -------------------------------------------------
-
-html_page = f"""<!DOCTYPE html>
-
-<html lang="en">
-
-<head>
-
-<meta charset="UTF-8">
-
-<meta name="viewport"
-content="width=device-width, initial-scale=1.0">
-
-<title>
-{html.escape(page_title)} | StrongerYears
-</title>
-
-<meta name="description"
-content="Practical information about healthy aging,
-muscle support, strength, recovery, energy and active living.">
-
-<style>
-
-* {{
-box-sizing:border-box;
-}}
-
-body {{
-margin:0;
-font-family:Arial,Helvetica,sans-serif;
-background:#f7faf8;
-color:#173b3d;
-line-height:1.75;
-}}
-
-header {{
-background:white;
-border-bottom:1px solid #e5eeee;
-padding:18px 6%;
-}}
-
-.nav {{
-max-width:1120px;
-margin:auto;
-display:flex;
-justify-content:space-between;
-align-items:center;
-}}
-
-.logo {{
-font-size:23px;
-font-weight:800;
-}}
-
-.logo span {{
-color:#23815f;
-}}
-
-nav a {{
-margin-left:25px;
-text-decoration:none;
-color:#173b3d;
-font-weight:600;
-}}
-
-.hero {{
-padding:75px 20px;
-background:linear-gradient(
-135deg,
-#e8f3ed,
-#ffffff
-);
-}}
-
-.hero-inner {{
-max-width:900px;
-margin:auto;
-}}
-
-.hero h1 {{
-font-size:clamp(38px,6vw,64px);
-line-height:1.08;
-margin:20px 0;
-}}
-
-.hero p {{
-font-size:18px;
-color:#596d6d;
-}}
-
-.container {{
-max-width:900px;
-margin:55px auto;
-padding:0 20px;
-}}
+PROMPT = f"""
+You are an ethical affiliate content strategist and senior wellness
+content writer targeting US adults.
 
-.article {{
-background:white;
-padding:45px;
-border-radius:20px;
-box-shadow:
-0 12px 40px rgba(20,60,60,.07);
-}}
-
-.article h2 {{
-margin-top:42px;
-font-size:30px;
-}}
+Website:
+{SITE_NAME}
 
-.article li {{
-margin:8px 0;
-}}
+Today's topic:
+{selected_topic}
 
-.recommend {{
-margin-top:45px;
-padding:30px;
-border-radius:18px;
-background:#edf7f1;
-border:1px solid #d8eadf;
-}}
+Affiliate product:
+Advanced Amino Formula by Advanced Bionutritionals
 
-.cta {{
-display:inline-block;
-margin-top:15px;
-padding:14px 25px;
-background:#23815f;
-color:white;
-text-decoration:none;
-border-radius:30px;
-font-weight:700;
-}}
+Affiliate link:
+{AFFILIATE_LINK}
 
-.disclosure {{
-margin-top:40px;
-padding:20px;
-background:#f4f6f5;
-border-radius:12px;
-font-size:14px;
-}}
+Audience:
+US adults, especially people interested in healthy aging,
+maintaining muscle, strength, recovery, energy and active living.
 
-footer {{
-text-align:center;
-padding:40px 20px;
-color:#718080;
-font-size:13px;
-}}
+Goal:
+Create ONE genuinely useful, original, high-quality article that can
+attract organic search traffic and help a reader make an informed
+purchase decision.
 
-@media(max-width:700px) {{
+IMPORTANT CONTENT RULES:
 
-.article {{
-padding:25px;
-}}
+- Do NOT make disease treatment or cure claims.
+- Do NOT diagnose medical conditions.
+- Do NOT promise guaranteed results.
+- Do NOT invent scientific studies.
+- Do NOT invent statistics.
+- Do NOT invent testimonials.
+- Do NOT invent customer reviews.
+- Do NOT pretend to be a doctor.
+- Do NOT use fear-based medical marketing.
+- Do NOT use fake urgency.
+- Do NOT use fake scarcity.
+- Do NOT use misleading claims.
+- Do NOT keyword stuff.
+- Do NOT write generic AI filler.
+- Do NOT copy another article.
+- Give genuinely useful information.
+- Use a natural, trustworthy US-English writing style.
+- The article should be useful even before the reader considers buying.
+- Product recommendation should be a reasonable optional recommendation,
+  not a guaranteed solution.
+- Mention that readers should consider their individual needs and,
+  where appropriate, speak with a qualified healthcare professional.
+- Do not use the product or brand name in the SEO title.
+- Do not use the affiliate link except in the recommendation/CTA area.
+- Include the affiliate disclosure exactly as provided.
 
-}}
+Avoid previously used titles.
 
-</style>
+Previous titles:
+{previous_titles_text}
 
-</head>
+ARTICLE STRUCTURE:
 
-<body>
+# SEO-friendly title
 
-<header>
+## Introduction
 
-<div class="nav">
+Explain the problem/topic clearly and why it matters.
 
-<div class="logo">
-Stronger<span>Years</span>
-</div>
+## Main useful sections
 
-<nav>
+Give practical, actionable information.
 
-<a href="../index.html">
-Home
-</a>
+Use several useful H2 sections where appropriate.
 
-</nav>
+## What to consider before choosing a supplement
 
-</div>
+Explain reasonable considerations such as ingredients,
+serving format, quality, personal needs, and checking with a
+health professional when appropriate.
 
-</header>
+## Recommended option
 
-<section class="hero">
+Naturally introduce Advanced Amino Formula by Advanced Bionutritionals
+as an option for readers interested in an amino-acid supplement.
 
-<div class="hero-inner">
+Do not make guaranteed or disease-related claims.
 
-<div style="
-text-transform:uppercase;
-letter-spacing:2px;
-font-size:13px;
-">
+## Conclusion
 
-Healthy Aging • Active Living
+Give a concise useful summary.
 
-</div>
+## Affiliate Disclosure
 
-<h1>
-{html.escape(page_title)}
-</h1>
+Use exactly:
 
-<p>
-Practical information to help you make more
-informed decisions about an active and
-healthy lifestyle.
-</p>
+{DISCLOSURE}
 
-</div>
+LENGTH:
 
-</section>
+Approximately 1000-1500 words.
 
-<main class="container">
+FORMAT:
 
-<article class="article">
-
-{article_html}
-
-<div class="recommend">
-
-<h2>
-Recommended Option
-</h2>
-
-<p>
-If you are considering an amino-acid formula
-as part of your nutrition routine, you can learn
-more about Advanced Amino Formula from
-Advanced Bionutritionals.
-</p>
-
-<a class="cta"
-href="{AFFILIATE_LINK}"
-rel="nofollow sponsored noopener"
-target="_blank">
-
-Learn More
-
-</a>
-
-</div>
-
-<div class="disclosure">
-
-<strong>
-Affiliate Disclosure
-</strong>
-
-<p>
-I may earn a commission if you buy through
-links on this page, at no extra cost to you.
-</p>
-
-</div>
-
-</article>
-
-</main>
-
-<footer>
-
-© 2026 StrongerYears · Educational content only.
-Not medical advice.
-
-</footer>
-
-</body>
-
-</html>
+Return ONLY the article in Markdown.
+Do not add commentary before or after the article.
 """
 
 
-with open(
-    filename,
-    "w",
-    encoding="utf-8"
-) as f:
+# ============================================================
+# OPENROUTER REQUEST WITH RETRIES
+# ============================================================
 
-    f.write(html_page)
+article = None
+last_error = None
 
-
-# -------------------------------------------------
-# AUTOMATIC HOMEPAGE
-# -------------------------------------------------
-
-articles = []
-
-for file in os.listdir("content"):
-
-    if file.endswith(".html"):
-
-        articles.append(file)
-
-
-articles.sort(reverse=True)
-
-
-cards = []
-
-for article_file in articles[:10]:
-
-    article_path = os.path.join(
-        "content",
-        article_file
-    )
+for attempt in range(1, 4):
 
     try:
 
-        with open(
-            article_path,
-            "r",
-            encoding="utf-8"
-        ) as f:
+        print(f"AI request attempt {attempt}/3")
 
-            content = f.read()
-
-
-        match = re.search(
-            r"<h1>(.*?)</h1>",
-            content,
-            re.IGNORECASE
+        response = requests.post(
+            "https://openrouter.ai/api/v1/chat/completions",
+            headers={
+                "Authorization": f"Bearer {API_KEY}",
+                "Content-Type": "application/json",
+            },
+            json={
+                "model": "openrouter/free",
+                "messages": [
+                    {
+                        "role": "user",
+                        "content": PROMPT
+                    }
+                ],
+            },
+            timeout=(20, 180),
         )
 
+        response.raise_for_status()
 
-        if match:
+        data = response.json()
 
-            article_title = re.sub(
-                "<.*?>",
-                "",
-                match.group(1)
+        if "choices" not in data:
+            raise RuntimeError(
+                f"OpenRouter response missing choices: {data}"
+            )
+
+        article = data["choices"][0]["message"]["content"].strip()
+
+        if not article:
+            raise RuntimeError(
+                "OpenRouter returned an empty article."
+            )
+
+        print("AI article generated successfully.")
+
+        break
+
+    except Exception as e:
+
+        last_error = e
+
+        print(
+            f"AI request failed on attempt {attempt}: {e}"
+        )
+
+        if attempt < 3:
+
+            print("Waiting 10 seconds before retry...")
+
+            time.sleep(10)
+
+        else:
+
+            raise RuntimeError(
+                f"OpenRouter failed after 3 attempts: {last_error}"
+            )
+
+
+# ============================================================
+# CLEAN ARTICLE
+# ============================================================
+
+article = article.strip()
+
+title = extract_h1(article)
+
+print(f"Generated title: {title}")
+
+
+# ============================================================
+# DUPLICATE PROTECTION
+# ============================================================
+
+existing_titles_normalized = {
+    re.sub(r"\s+", " ", t.lower()).strip()
+    for t in existing_titles
+}
+
+if title.lower().strip() in existing_titles_normalized:
+
+    print(
+        "Duplicate title detected. Generating a replacement article."
+    )
+
+    retry_prompt = PROMPT + """
+
+CRITICAL:
+The title you generated was already used.
+
+Generate a completely different title and article.
+Do NOT reuse any previous title.
+"""
+
+    replacement = None
+    replacement_error = None
+
+    for attempt in range(1, 4):
+
+        try:
+
+            print(
+                f"Replacement AI request attempt {attempt}/3"
+            )
+
+            response = requests.post(
+                "https://openrouter.ai/api/v1/chat/completions",
+                headers={
+                    "Authorization": f"Bearer {API_KEY}",
+                    "Content-Type": "application/json",
+                },
+                json={
+                    "model": "openrouter/free",
+                    "messages": [
+                        {
+                            "role": "user",
+                            "content": retry_prompt
+                        }
+                    ],
+                },
+                timeout=(20, 180),
+            )
+
+            response.raise_for_status()
+
+            data = response.json()
+
+            replacement = (
+                data["choices"][0]["message"]["content"]
+                .strip()
+            )
+
+            if replacement:
+                break
+
+        except Exception as e:
+
+            replacement_error = e
+
+            print(
+                f"Replacement request failed: {e}"
+            )
+
+            if attempt < 3:
+                time.sleep(10)
+
+    if replacement:
+
+        replacement_title = extract_h1(replacement)
+
+        if (
+            replacement_title.lower().strip()
+            not in existing_titles_normalized
+        ):
+
+            article = replacement
+            title = replacement_title
+
+            print(
+                f"Replacement title accepted: {title}"
             )
 
         else:
 
-            article_title = article_file
+            print(
+                "Replacement was also a duplicate."
+            )
+            print(
+                "Skipping this run instead of publishing duplicate content."
+            )
+            raise SystemExit(0)
 
+    else:
 
-        cards.append(
-            f"""
-<div class="article-card">
-
-<h3>
-{html.escape(article_title)}
-</h3>
-
-<p>
-Explore this practical guide from
-StrongerYears.
-</p>
-
-<a class="read-more"
-href="content/{article_file}">
-
-Read Full Article →
-
-</a>
-
-</div>
-"""
+        print(
+            f"Could not generate replacement article: {replacement_error}"
         )
 
-    except Exception:
-
-        continue
+        raise SystemExit(0)
 
 
-article_cards = "\n".join(cards)
+# ============================================================
+# ADD AFFILIATE CTA
+# ============================================================
 
+article_html = markdown_to_html(article)
 
-# -------------------------------------------------
-# HOMEPAGE HTML
-# -------------------------------------------------
+affiliate_section = f"""
+<section class="recommendation">
+    <h2>Recommended Option</h2>
 
-latest_link = (
-    f"content/{articles[0]}"
-    if articles
-    else "#"
+    <p>
+        If you are looking for an amino-acid supplement to consider as
+        part of an overall healthy-aging and active-lifestyle routine,
+        Advanced Amino Formula is one option worth researching.
+    </p>
+
+    <p>
+        You can learn more about the formula, its ingredients and
+        the manufacturer's information on the official product page.
+    </p>
+
+    <p class="cta-wrap">
+        <a
+            class="cta"
+            href="{AFFILIATE_LINK}"
+            target="_blank"
+            rel="nofollow sponsored noopener"
+        >
+            Learn More About the Formula
+        </a>
+    </p>
+
+    <p class="small-note">
+        Always consider your individual needs and consult a qualified
+        healthcare professional when appropriate.
+    </p>
+</section>
+
+<section class="disclosure">
+    <h2>Affiliate Disclosure</h2>
+    <p>{DISCLOSURE}</p>
+</section>
+"""
+
+# Remove any AI-generated disclosure section so we don't duplicate it.
+article_html = re.sub(
+    r"<h2>Affiliate Disclosure</h2>.*?(?=<h2>|$)",
+    "",
+    article_html,
+    flags=re.IGNORECASE | re.DOTALL
 )
 
+article_html += affiliate_section
 
-homepage = f"""<!DOCTYPE html>
 
+# ============================================================
+# CREATE ARTICLE PAGE
+# ============================================================
+
+slug = slugify(title)
+
+timestamp = datetime.now().strftime("%Y-%m-%d-%H%M%S")
+
+filename = f"{slug}-{timestamp}.html"
+
+filepath = os.path.join(CONTENT_DIR, filename)
+
+
+page_html = f"""<!DOCTYPE html>
+<html lang="en">
+<head>
+
+<meta charset="UTF-8">
+
+<meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+>
+
+<title>{html.escape(title)} | {SITE_NAME}</title>
+
+<meta
+    name="description"
+    content="{html.escape(title)} — practical guidance for healthy aging, strength and active living."
+>
+
+<meta name="robots" content="index,follow">
+
+<style>
+
+:root {{
+    --green: #315c4a;
+    --green-dark: #234638;
+    --cream: #f7f3ea;
+    --paper: #fffdf8;
+    --text: #27352f;
+    --muted: #68756e;
+    --border: #e5e0d5;
+}}
+
+* {{
+    box-sizing: border-box;
+}}
+
+body {{
+    margin: 0;
+    background: var(--cream);
+    color: var(--text);
+    font-family:
+        Arial,
+        Helvetica,
+        sans-serif;
+    line-height: 1.75;
+}}
+
+.site-header {{
+    background: var(--green);
+    color: white;
+    padding: 22px 20px;
+}}
+
+.header-inner {{
+    max-width: 900px;
+    margin: auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 20px;
+}}
+
+.logo {{
+    color: white;
+    text-decoration: none;
+    font-size: 24px;
+    font-weight: 700;
+}}
+
+.back {{
+    color: white;
+    text-decoration: none;
+    opacity: .9;
+}}
+
+.hero {{
+    padding: 65px 20px 45px;
+    background:
+        linear-gradient(
+            180deg,
+            #e8efe9 0%,
+            var(--cream) 100%
+        );
+}}
+
+.hero-inner {{
+    max-width: 900px;
+    margin: auto;
+}}
+
+.eyebrow {{
+    color: var(--green);
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+}}
+
+.hero h1 {{
+    max-width: 850px;
+    margin: 12px 0 0;
+    font-family:
+        Georgia,
+        "Times New Roman",
+        serif;
+    font-size: clamp(36px, 6vw, 60px);
+    line-height: 1.08;
+    color: var(--green-dark);
+}}
+
+.article {{
+    max-width: 820px;
+    margin: -5px auto 70px;
+    padding: 45px 35px;
+    background: var(--paper);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    box-shadow:
+        0 10px 35px rgba(30, 50, 40, .06);
+}}
+
+.article h1 {{
+    display: none;
+}}
+
+.article h2 {{
+    margin-top: 42px;
+    margin-bottom: 15px;
+    color: var(--green-dark);
+    font-family:
+        Georgia,
+        "Times New Roman",
+        serif;
+    font-size: 29px;
+    line-height: 1.25;
+}}
+
+.article h3 {{
+    color: var(--green-dark);
+    font-family:
+        Georgia,
+        "Times New Roman",
+        serif;
+    font-size: 22px;
+}}
+
+.article p {{
+    margin: 0 0 20px;
+}}
+
+.article ul {{
+    padding-left: 25px;
+    margin-bottom: 25px;
+}}
+
+.article li {{
+    margin-bottom: 10px;
+}}
+
+.article a {{
+    color: var(--green-dark);
+    font-weight: 600;
+}}
+
+.recommendation {{
+    margin-top: 50px;
+    padding: 32px;
+    border-radius: 16px;
+    background: #edf3ee;
+    border: 1px solid #dce7df;
+}}
+
+.recommendation h2 {{
+    margin-top: 0;
+}}
+
+.cta-wrap {{
+    margin-top: 28px !important;
+}}
+
+.cta {{
+    display: inline-block;
+    padding: 15px 25px;
+    border-radius: 8px;
+    background: var(--green);
+    color: white !important;
+    text-decoration: none;
+    font-weight: 700;
+}}
+
+.cta:hover {{
+    background: var(--green-dark);
+}}
+
+.small-note {{
+    margin-top: 18px !important;
+    font-size: 14px;
+    color: var(--muted);
+}}
+
+.disclosure {{
+    margin-top: 35px;
+    padding-top: 25px;
+    border-top: 1px solid var(--border);
+    color: var(--muted);
+    font-size: 14px;
+}}
+
+.disclosure h2 {{
+    margin-top: 0;
+    font-size: 20px;
+}}
+
+footer {{
+    padding: 35px 20px;
+    text-align: center;
+    color: var(--muted);
+    font-size: 14px;
+}}
+
+@media (max-width: 650px) {{
+
+    .article {{
+        margin: 0 12px 45px;
+        padding: 28px 21px;
+        border-radius: 12px;
+    }}
+
+    .hero {{
+        padding: 45px 20px 35px;
+    }}
+
+    .header-inner {{
+        flex-direction: column;
+        align-items: flex-start;
+    }}
+
+}}
+
+</style>
+
+</head>
+
+<body>
+
+<header class="site-header">
+
+    <div class="header-inner">
+
+        <a class="logo" href="../index.html">
+            StrongerYears
+        </a>
+
+        <a class="back" href="../index.html">
+            ← All Guides
+        </a>
+
+    </div>
+
+</header>
+
+
+<section class="hero">
+
+    <div class="hero-inner">
+
+        <div class="eyebrow">
+            Healthy Aging • Strength • Active Living
+        </div>
+
+        <h1>{html.escape(title)}</h1>
+
+    </div>
+
+</section>
+
+
+<main class="article">
+
+    {article_html}
+
+</main>
+
+
+<footer>
+
+    © {datetime.now().year} StrongerYears.
+    Educational content for healthy aging and active living.
+
+</footer>
+
+</body>
+
+</html>
+"""
+
+
+with open(filepath, "w", encoding="utf-8") as f:
+    f.write(page_html)
+
+print(f"Article created: {filepath}")
+
+
+# ============================================================
+# REBUILD HOMEPAGE AUTOMATICALLY
+# ============================================================
+
+articles = []
+
+for filename in os.listdir(CONTENT_DIR):
+
+    if not filename.endswith(".html"):
+        continue
+
+    filepath2 = os.path.join(CONTENT_DIR, filename)
+
+    try:
+
+        with open(filepath2, "r", encoding="utf-8") as f:
+            content = f.read()
+
+        title_match = re.search(
+            r"<h1[^>]*>(.*?)</h1>",
+            content,
+            flags=re.IGNORECASE | re.DOTALL
+        )
+
+        if title_match:
+
+            article_title = re.sub(
+                r"<[^>]+>",
+                "",
+                title_match.group(1)
+            )
+
+            article_title = html.unescape(
+                article_title
+            ).strip()
+
+        else:
+
+            article_title = filename.replace(
+                ".html",
+                ""
+            ).replace(
+                "-",
+                " "
+            ).title()
+
+        articles.append(
+            {
+                "filename": filename,
+                "title": article_title,
+            }
+        )
+
+    except Exception as e:
+
+        print(
+            f"Could not process {filename}: {e}"
+        )
+
+
+# Newest filename first.
+articles.sort(
+    key=lambda x: x["filename"],
+    reverse=True
+)
+
+latest_articles = articles[:10]
+
+
+# ============================================================
+# HOMEPAGE ARTICLE CARDS
+# ============================================================
+
+cards = ""
+
+for item in latest_articles:
+
+    cards += f"""
+    <article class="card">
+
+        <div class="card-label">
+            GUIDE
+        </div>
+
+        <h2>
+            {html.escape(item["title"])}
+        </h2>
+
+        <a href="content/{html.escape(item["filename"])}">
+            Read the Guide →
+        </a>
+
+    </article>
+    """
+
+
+if not cards:
+
+    cards = """
+    <p>
+        New guides are being prepared. Please check back soon.
+    </p>
+    """
+
+
+# ============================================================
+# HOMEPAGE
+# ============================================================
+
+homepage_html = f"""<!DOCTYPE html>
 <html lang="en">
 
 <head>
 
 <meta charset="UTF-8">
 
-<meta name="viewport"
-content="width=device-width, initial-scale=1.0">
+<meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+>
 
-<title>
-StrongerYears | Healthy Aging & Active Living
-</title>
+<title>StrongerYears | Healthy Aging & Active Living</title>
 
-<meta name="description"
-content="Practical guides for healthy aging,
-muscle support, nutrition, strength,
-recovery and active living.">
+<meta
+    name="description"
+    content="Practical guides for healthy aging, strength, recovery, nutrition and active living."
+>
+
+<meta name="robots" content="index,follow">
 
 <style>
 
+:root {{
+    --green: #315c4a;
+    --green-dark: #234638;
+    --cream: #f7f3ea;
+    --paper: #fffdf8;
+    --text: #27352f;
+    --muted: #68756e;
+    --border: #e5e0d5;
+}}
+
 * {{
-box-sizing:border-box;
+    box-sizing: border-box;
 }}
 
 body {{
-margin:0;
-font-family:Arial,Helvetica,sans-serif;
-background:#f7faf8;
-color:#173b3d;
-line-height:1.7;
+    margin: 0;
+    background: var(--cream);
+    color: var(--text);
+    font-family:
+        Arial,
+        Helvetica,
+        sans-serif;
+    line-height: 1.65;
 }}
 
 header {{
-background:white;
-border-bottom:1px solid #e5eeee;
-padding:18px 6%;
+    background: var(--green);
+    color: white;
+    padding: 24px 20px;
 }}
 
-.nav {{
-max-width:1120px;
-margin:auto;
-display:flex;
-justify-content:space-between;
-align-items:center;
+.header-inner {{
+    max-width: 1100px;
+    margin: auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
 }}
 
 .logo {{
-font-size:23px;
-font-weight:800;
-}}
-
-.logo span {{
-color:#23815f;
-}}
-
-nav a {{
-margin-left:25px;
-text-decoration:none;
-color:#173b3d;
-font-weight:600;
+    color: white;
+    text-decoration: none;
+    font-size: 26px;
+    font-weight: 700;
 }}
 
 .hero {{
-padding:85px 20px;
-background:linear-gradient(
-135deg,
-#e8f3ed,
-#ffffff
-);
+    padding: 90px 20px 80px;
+    background:
+        linear-gradient(
+            180deg,
+            #e8efe9 0%,
+            var(--cream) 100%
+        );
 }}
 
 .hero-inner {{
-max-width:950px;
-margin:auto;
-text-align:center;
+    max-width: 1100px;
+    margin: auto;
 }}
 
-.badge {{
-display:inline-block;
-padding:7px 14px;
-border-radius:30px;
-background:white;
-font-size:13px;
-font-weight:700;
-letter-spacing:1px;
-text-transform:uppercase;
+.eyebrow {{
+    color: var(--green);
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 1.6px;
+    text-transform: uppercase;
 }}
 
 .hero h1 {{
-font-size:clamp(42px,7vw,70px);
-line-height:1.05;
-margin:22px 0;
+    max-width: 820px;
+    margin: 14px 0 20px;
+    font-family:
+        Georgia,
+        "Times New Roman",
+        serif;
+    font-size: clamp(44px, 7vw, 76px);
+    line-height: 1.02;
+    color: var(--green-dark);
 }}
 
 .hero p {{
-max-width:700px;
-margin:auto;
-font-size:19px;
-color:#526969;
+    max-width: 680px;
+    color: var(--muted);
+    font-size: 19px;
 }}
 
-.container {{
-max-width:1120px;
-margin:60px auto;
-padding:0 20px;
+.latest {{
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 65px 20px;
 }}
 
 .section-title {{
-text-align:center;
-margin-bottom:35px;
+    font-family:
+        Georgia,
+        "Times New Roman",
+        serif;
+    font-size: 38px;
+    color: var(--green-dark);
+    margin: 0 0 30px;
 }}
 
-.section-title h2 {{
-font-size:36px;
+.cards {{
+    display: grid;
+    grid-template-columns:
+        repeat(auto-fit, minmax(280px, 1fr));
+    gap: 22px;
 }}
 
-.articles {{
-display:grid;
-grid-template-columns:
-repeat(2,1fr);
-gap:24px;
+.card {{
+    background: var(--paper);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 28px;
+    box-shadow:
+        0 8px 25px rgba(30, 50, 40, .05);
 }}
 
-.article-card {{
-background:white;
-padding:32px;
-border-radius:20px;
-box-shadow:
-0 12px 40px rgba(20,60,60,.08);
-border:1px solid #e4eeee;
+.card-label {{
+    color: var(--green);
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 1.4px;
 }}
 
-.article-card h3 {{
-font-size:27px;
-margin-top:0;
+.card h2 {{
+    font-family:
+        Georgia,
+        "Times New Roman",
+        serif;
+    color: var(--green-dark);
+    font-size: 25px;
+    line-height: 1.3;
+    margin: 12px 0 22px;
 }}
 
-.article-card p {{
-color:#596d6d;
+.card a {{
+    color: var(--green);
+    font-weight: 700;
+    text-decoration: none;
 }}
 
-.read-more {{
-display:inline-block;
-margin-top:15px;
-padding:13px 22px;
-border-radius:28px;
-background:#173b3d;
-color:white;
-text-decoration:none;
-font-weight:700;
+.about {{
+    background: #edf3ee;
+    padding: 65px 20px;
 }}
 
-.topics {{
-display:grid;
-grid-template-columns:
-repeat(3,1fr);
-gap:22px;
+.about-inner {{
+    max-width: 900px;
+    margin: auto;
 }}
 
-.topic {{
-background:white;
-padding:28px;
-border-radius:18px;
-border:1px solid #e5eeee;
+.about h2 {{
+    font-family:
+        Georgia,
+        "Times New Roman",
+        serif;
+    color: var(--green-dark);
+    font-size: 38px;
 }}
 
-.topic p {{
-color:#637575;
-}}
-
-.cta-section {{
-margin-top:70px;
-padding:55px 30px;
-border-radius:24px;
-background:#edf7f1;
-text-align:center;
-}}
-
-.button {{
-display:inline-block;
-margin-top:20px;
-padding:15px 28px;
-border-radius:30px;
-background:#23815f;
-color:white;
-text-decoration:none;
-font-weight:700;
+.about p {{
+    color: var(--muted);
+    font-size: 17px;
 }}
 
 .disclosure {{
-max-width:800px;
-margin:45px auto;
-padding:20px;
-background:white;
-border-radius:12px;
-font-size:13px;
-color:#657777;
-text-align:center;
+    max-width: 900px;
+    margin: auto;
+    padding: 45px 20px;
+    color: var(--muted);
+    font-size: 14px;
 }}
 
 footer {{
-padding:40px 20px;
-text-align:center;
-color:#718080;
-font-size:13px;
+    background: var(--green-dark);
+    color: white;
+    text-align: center;
+    padding: 35px 20px;
+    font-size: 14px;
 }}
 
-@media(max-width:750px) {{
+@media (max-width: 650px) {{
 
-nav {{
-display:none;
-}}
+    .hero {{
+        padding: 60px 20px;
+    }}
 
-.articles,
-.topics {{
-grid-template-columns:1fr;
-}}
+    .hero h1 {{
+        font-size: 46px;
+    }}
 
 }}
 
@@ -941,178 +1261,96 @@ grid-template-columns:1fr;
 
 <header>
 
-<div class="nav">
+    <div class="header-inner">
 
-<div class="logo">
-Stronger<span>Years</span>
-</div>
+        <a class="logo" href="index.html">
+            StrongerYears
+        </a>
 
-<nav>
-
-<a href="index.html">
-Home
-</a>
-
-<a href="{latest_link}">
-Latest Article
-</a>
-
-</nav>
-
-</div>
+    </div>
 
 </header>
 
+
 <section class="hero">
 
-<div class="hero-inner">
+    <div class="hero-inner">
 
-<div class="badge">
-Healthy Aging • Active Living
-</div>
+        <div class="eyebrow">
+            Healthy Aging • Strength • Active Living
+        </div>
 
-<h1>
-Build stronger habits for your later years.
-</h1>
+        <h1>
+            Practical guidance for a stronger, more active life.
+        </h1>
 
-<p>
-Practical, easy-to-understand guides covering
-muscle support, nutrition, recovery, energy
-and active living.
-</p>
+        <p>
+            Clear, useful guides covering nutrition, strength,
+            recovery and healthy-aging habits — without the hype.
+        </p>
 
-</div>
-
-</section>
-
-<section class="container">
-
-<div class="section-title">
-
-<h2>
-Latest Articles
-</h2>
-
-<p>
-Useful information designed to help you make
-more informed wellness and lifestyle decisions.
-</p>
-
-</div>
-
-<div class="articles">
-
-{article_cards}
-
-</div>
+    </div>
 
 </section>
 
-<section class="container">
 
-<div class="section-title">
+<section class="latest">
 
-<h2>
-Explore Our Topics
-</h2>
+    <h2 class="section-title">
+        Latest Guides
+    </h2>
 
-<p>
-Simple guides focused on active aging.
-</p>
+    <div class="cards">
 
-</div>
+        {cards}
 
-<div class="topics">
-
-<div class="topic">
-
-<h3>
-💪 Muscle & Strength
-</h3>
-
-<p>
-Practical habits and nutrition considerations
-for maintaining strength and staying active.
-</p>
-
-</div>
-
-<div class="topic">
-
-<h3>
-🥗 Nutrition
-</h3>
-
-<p>
-Understand everyday nutrition choices and
-what to consider when evaluating supplements.
-</p>
-
-</div>
-
-<div class="topic">
-
-<h3>
-🚶 Active Aging
-</h3>
-
-<p>
-Ideas for supporting an active lifestyle and
-building healthy long-term habits.
-</p>
-
-</div>
-
-</div>
+    </div>
 
 </section>
 
-<section class="container">
 
-<div class="cta-section">
+<section class="about">
 
-<h2>
-Explore Your Nutrition Options
-</h2>
+    <div class="about-inner">
 
-<p>
-If you're exploring amino-acid supplements as
-part of your nutrition routine, you can learn
-more about one option here.
-</p>
+        <h2>
+            Better information. Better habits.
+        </h2>
 
-<a class="button"
-href="{AFFILIATE_LINK}"
-rel="nofollow sponsored noopener"
-target="_blank">
+        <p>
+            StrongerYears focuses on practical information that can
+            help adults make thoughtful decisions about nutrition,
+            strength, recovery and staying active as they age.
+        </p>
 
-Learn More
+        <p>
+            Our guides are educational and are not a substitute for
+            personalized medical advice.
+        </p>
 
-</a>
-
-</div>
-
-<div class="disclosure">
-
-<strong>
-Affiliate Disclosure
-</strong>
-
-<br><br>
-
-I may earn a commission if you buy through
-links on this page, at no extra cost to you.
-
-</div>
+    </div>
 
 </section>
+
+
+<section class="disclosure">
+
+    <strong>Affiliate Disclosure</strong>
+
+    <p>
+        {DISCLOSURE}
+    </p>
+
+</section>
+
 
 <footer>
 
-© 2026 StrongerYears · Educational content only.
-Not medical advice.
+    © {datetime.now().year} StrongerYears.
+    Educational content for healthy aging and active living.
 
 </footer>
+
 
 </body>
 
@@ -1120,27 +1358,11 @@ Not medical advice.
 """
 
 
-with open(
-    "index.html",
-    "w",
-    encoding="utf-8"
-) as f:
+with open("index.html", "w", encoding="utf-8") as f:
+    f.write(homepage_html)
 
-    f.write(homepage)
+print("Homepage updated successfully.")
 
-
-print(
-    f"Article created: {filename}"
-)
-
-print(
-    "Homepage automatically updated."
-)
-
-print(
-    f"Previous articles found: {len(previous_titles)}"
-)
-
-print(
-    f"Total articles now: {len(articles)}"
-)
+print("========================================")
+print("AGENT RUN COMPLETED SUCCESSFULLY")
+print("========================================")
