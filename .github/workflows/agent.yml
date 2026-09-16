@@ -24,7 +24,7 @@ jobs:
       - name: Install requests
         run: pip install requests
 
-      - name: Run Qwen Agent
+      - name: Run AI Affiliate Agent
         env:
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
         run: python agent.py
@@ -33,6 +33,9 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add content/ index.html
-          git diff --cached --quiet || git commit -m "Update site content"
+
+          git add .
+
+          git diff --cached --quiet || git commit -m "Update affiliate site"
+
           git push
