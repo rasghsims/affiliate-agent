@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://rasghsims.github.io/affiliate-agent/sitemap.xml
