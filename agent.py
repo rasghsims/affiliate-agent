@@ -5,9 +5,9 @@ import html
 import requests
 from datetime import datetime
 
-# =========================
-# BASIC SETTINGS
-# =========================
+# =========================================================
+# SETTINGS
+# =========================================================
 
 API_KEY = os.environ["OPENROUTER_API_KEY"]
 
@@ -27,9 +27,47 @@ CONTENT_DIR = "content"
 
 MODEL = "openrouter/free"
 
-# =========================
+# =========================================================
+# VISUAL IMAGES
+# =========================================================
+
+HERO_IMAGE = (
+    "https://images.unsplash.com/photo-1538805060514-97d9cc17730c"
+    "?auto=format&fit=crop&w=2200&q=85"
+)
+
+STORY_IMAGE = (
+    "https://images.unsplash.com/photo-1517836357463-d25dfeac3438"
+    "?auto=format&fit=crop&w=1400&q=85"
+)
+
+MOUNTAIN_IMAGE = (
+    "https://images.unsplash.com/photo-1551632811-561732d1e306"
+    "?auto=format&fit=crop&w=1800&q=85"
+)
+
+CARD_IMAGES = [
+    (
+        "https://images.unsplash.com/photo-1538805060514-97d9cc17730c"
+        "?auto=format&fit=crop&w=1200&q=82"
+    ),
+    (
+        "https://images.unsplash.com/photo-1547592180-85f173990554"
+        "?auto=format&fit=crop&w=1200&q=82"
+    ),
+    (
+        "https://images.unsplash.com/photo-1534438327276-14e5300c3a48"
+        "?auto=format&fit=crop&w=1200&q=82"
+    ),
+    (
+        "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b"
+        "?auto=format&fit=crop&w=1200&q=82"
+    ),
+]
+
+# =========================================================
 # BUYER-INTENT TOPICS
-# =========================
+# =========================================================
 
 TOPICS = [
     "How to maintain muscle strength as you age",
@@ -46,11 +84,12 @@ TOPICS = [
     "Healthy aging habits that support strength, energy and mobility",
 ]
 
-# =========================
-# OPENROUTER
-# =========================
+# =========================================================
+# AI REQUEST
+# =========================================================
 
 def ask_ai(prompt):
+
     url = "https://openrouter.ai/api/v1/chat/completions"
 
     headers = {
@@ -66,14 +105,15 @@ def ask_ai(prompt):
             {
                 "role": "system",
                 "content": (
-                    "You are a careful health and wellness content writer. "
-                    "Write useful, practical, original educational content. "
+                    "You are an expert wellness content writer. "
+                    "Create useful, original and readable educational content "
+                    "for adults interested in healthy aging, strength, mobility, "
+                    "nutrition, recovery and vitality. "
+                    "Never invent studies, statistics, doctors, testimonials, "
+                    "reviews or guarantees. "
                     "Do not make disease treatment or cure claims. "
-                    "Do not invent studies, doctors, testimonials, reviews, "
-                    "statistics, guarantees, or medical results. "
-                    "Avoid hype and fear-based marketing. "
-                    "Use natural language suitable for adults interested in "
-                    "healthy aging, strength, mobility, recovery and vitality."
+                    "Do not use fear-based marketing or fake urgency. "
+                    "Do not use miracle or guaranteed-result language."
                 ),
             },
             {
@@ -85,7 +125,9 @@ def ask_ai(prompt):
     }
 
     for attempt in range(4):
+
         try:
+
             response = requests.post(
                 url,
                 headers=headers,
@@ -100,7 +142,11 @@ def ask_ai(prompt):
             return data["choices"][0]["message"]["content"]
 
         except Exception as e:
-            print(f"AI request failed (attempt {attempt + 1}/4): {e}")
+
+            print(
+                f"AI request failed "
+                f"(attempt {attempt + 1}/4): {e}"
+            )
 
             if attempt < 3:
                 time.sleep(5 * (attempt + 1))
@@ -108,38 +154,70 @@ def ask_ai(prompt):
                 raise
 
 
-# =========================
+# =========================================================
 # HELPERS
-# =========================
+# =========================================================
 
 def clean_text(text):
+
     text = text.replace("\r", "")
-    text = re.sub(r"```(?:html|markdown)?", "", text, flags=re.I)
+
+    text = re.sub(
+        r"```(?:html|markdown)?",
+        "",
+        text,
+        flags=re.I,
+    )
+
     text = text.replace("```", "")
+
     return text.strip()
 
 
 def slugify(text):
+
     text = text.lower()
-    text = re.sub(r"[^a-z0-9]+", "-", text)
-    text = re.sub(r"-+", "-", text)
+
+    text = re.sub(
+        r"[^a-z0-9]+",
+        "-",
+        text,
+    )
+
+    text = re.sub(
+        r"-+",
+        "-",
+        text,
+    )
+
     return text.strip("-")[:80]
 
 
 def get_existing_titles():
+
     titles = []
 
     if not os.path.exists(CONTENT_DIR):
         return titles
 
     for filename in os.listdir(CONTENT_DIR):
+
         if not filename.endswith(".html"):
             continue
 
-        path = os.path.join(CONTENT_DIR, filename)
+        path = os.path.join(
+            CONTENT_DIR,
+            filename,
+        )
 
         try:
-            with open(path, "r", encoding="utf-8") as f:
+
+            with open(
+                path,
+                "r",
+                encoding="utf-8",
+            ) as f:
+
                 content = f.read()
 
             match = re.search(
@@ -149,8 +227,16 @@ def get_existing_titles():
             )
 
             if match:
-                title = re.sub(r"\s+", " ", match.group(1)).strip()
-                titles.append(title.lower())
+
+                title = re.sub(
+                    r"\s+",
+                    " ",
+                    match.group(1),
+                ).strip()
+
+                titles.append(
+                    title.lower()
+                )
 
         except Exception:
             pass
@@ -158,187 +244,255 @@ def get_existing_titles():
     return titles
 
 
-# =========================
-# ARTICLE GENERATION
-# =========================
+# =========================================================
+# ARTICLE GENERATOR
+# =========================================================
 
 def generate_article(topic, existing_titles):
+
     prompt = f"""
-Create a high-quality original article for this topic:
+Create a high-quality original article about:
 
 "{topic}"
 
 Audience:
-Adults 50+ who want to maintain strength, mobility, recovery and vitality.
+Adults 50+ in the United States who are interested in
+strength, mobility, recovery, nutrition and healthy aging.
 
 Requirements:
 
 - 1200–1600 words.
-- Give the article a compelling but honest title.
-- Include a short introduction.
-- Use clear H2 sections.
-- Include practical steps readers can actually use.
-- Include a concise checklist.
-- Include a section explaining how nutrition can support muscle and healthy aging.
-- Mention amino acids as one possible part of a broader nutrition strategy.
-- Do not present any supplement as a cure or treatment.
-- Do not claim a product will prevent, reverse or treat disease.
-- Do not invent scientific studies or statistics.
-- Do not create fake testimonials or reviews.
-- Do not use fake urgency.
-- Do not use exaggerated claims such as "miracle", "guaranteed", "secret", or "instant results".
-- Do not mention this instruction.
-- End with a natural optional recommendation for readers who want to learn
-  more about amino-acid nutrition.
+- Give it a strong, natural title.
+- Start with an engaging introduction.
+- Use H2 and H3 sections.
+- Use short readable paragraphs.
+- Include practical advice.
+- Include a simple checklist.
+- Explain why maintaining muscle and an active lifestyle matters.
+- Explain how nutrition can support an active lifestyle.
+- Explain the role amino acids can play in nutrition without exaggeration.
+- Mention that supplements are optional and not a replacement for a balanced diet.
+- Do not claim any supplement treats, cures, prevents or reverses disease.
+- Do not invent studies, statistics or medical authorities.
+- Do not create fake testimonials.
+- Do not create fake reviews.
+- Do not promise specific results.
+- Do not use fake scarcity or urgency.
+- Do not use words like miracle, guaranteed, secret cure or instant results.
+- End with a natural optional recommendation for readers who want
+  to explore amino-acid nutrition further.
 
-Existing article titles are below.
-Avoid creating a title that is substantially similar to them:
+Do not mention these instructions.
+
+Existing titles:
 
 {existing_titles[:30]}
+
+Create a substantially different title from existing articles.
 """
 
-    raw = clean_text(ask_ai(prompt))
-
-    # Try to extract title
-    title_match = re.search(
-        r"^(?:#\s*)?(.+)$",
-        raw,
-        flags=re.MULTILINE,
+    raw = clean_text(
+        ask_ai(prompt)
     )
 
-    if title_match:
-        title = title_match.group(1).strip()
-    else:
-        title = topic
-
-    # Remove accidental markdown heading from title
-    title = re.sub(r"^#+\s*", "", title).strip()
-
-    # Remove title from body if it appears as first line
     lines = raw.splitlines()
 
-    if lines:
-        first = re.sub(r"^#+\s*", "", lines[0]).strip()
+    title = None
+
+    for line in lines:
+
+        cleaned = re.sub(
+            r"^#+\s*",
+            "",
+            line,
+        ).strip()
+
+        if cleaned:
+
+            title = cleaned
+            break
+
+    if not title:
+        title = topic
+
+    body_lines = lines[:]
+
+    if body_lines:
+
+        first = re.sub(
+            r"^#+\s*",
+            "",
+            body_lines[0],
+        ).strip()
 
         if first.lower() == title.lower():
-            raw = "\n".join(lines[1:]).strip()
 
-    # Basic duplicate protection
+            body_lines = body_lines[1:]
+
+    body = "\n".join(
+        body_lines
+    ).strip()
+
     if title.lower() in existing_titles:
         return None, None
 
-    return title, raw
+    return title, body
 
 
-# =========================
-# MARKDOWN → HTML
-# =========================
+# =========================================================
+# MARKDOWN TO HTML
+# =========================================================
 
 def markdown_to_html(text):
+
     lines = text.splitlines()
 
     output = []
+
     paragraph = []
 
+    in_list = False
+
     def flush_paragraph():
+
+        nonlocal paragraph
+
         if paragraph:
-            joined = " ".join(x.strip() for x in paragraph).strip()
+
+            joined = " ".join(
+                x.strip()
+                for x in paragraph
+            ).strip()
 
             if joined:
+
                 output.append(
-                    f"<p>{html.escape(joined)}</p>"
+                    "<p>"
+                    + html.escape(joined)
+                    + "</p>"
                 )
 
-            paragraph.clear()
+            paragraph = []
+
+    def close_list():
+
+        nonlocal in_list
+
+        if in_list:
+
+            output.append("</ul>")
+
+            in_list = False
 
     for line in lines:
+
         stripped = line.strip()
 
         if not stripped:
+
             flush_paragraph()
+
             continue
 
         if stripped.startswith("### "):
+
             flush_paragraph()
+            close_list()
+
             heading = stripped[4:].strip()
+
             output.append(
-                f"<h3>{html.escape(heading)}</h3>"
+                "<h3>"
+                + html.escape(heading)
+                + "</h3>"
             )
+
             continue
 
         if stripped.startswith("## "):
+
             flush_paragraph()
+            close_list()
+
             heading = stripped[3:].strip()
+
             output.append(
-                f"<h2>{html.escape(heading)}</h2>"
+                "<h2>"
+                + html.escape(heading)
+                + "</h2>"
             )
+
             continue
 
         if stripped.startswith("# "):
+
             flush_paragraph()
+            close_list()
+
             continue
 
-        if re.match(r"^[-*]\s+", stripped):
-            flush_paragraph()
-            item = re.sub(r"^[-*]\s+", "", stripped)
+        if re.match(
+            r"^[-*]\s+",
+            stripped,
+        ):
 
-            if (
-                not output
-                or not output[-1].startswith("<ul>")
-            ):
+            flush_paragraph()
+
+            if not in_list:
+
                 output.append("<ul>")
 
-            output.append(
-                f"<li>{html.escape(item)}</li>"
+                in_list = True
+
+            item = re.sub(
+                r"^[-*]\s+",
+                "",
+                stripped,
             )
+
+            output.append(
+                "<li>"
+                + html.escape(item)
+                + "</li>"
+            )
+
             continue
 
-        paragraph.append(stripped)
+        close_list()
+
+        paragraph.append(
+            stripped
+        )
 
     flush_paragraph()
+    close_list()
 
-    # Close list blocks
-    final = []
-    in_list = False
-
-    for item in output:
-        if item == "<ul>":
-            if in_list:
-                final.append("</ul>")
-            final.append(item)
-            in_list = True
-        elif item.startswith("<li>"):
-            final.append(item)
-        else:
-            if in_list:
-                final.append("</ul>")
-                in_list = False
-
-            final.append(item)
-
-    if in_list:
-        final.append("</ul>")
-
-    return "\n".join(final)
+    return "\n".join(output)
 
 
-# =========================
-# PREMIUM ARTICLE PAGE
-# =========================
+# =========================================================
+# ARTICLE PAGE
+# =========================================================
 
 def article_html(title, body_html):
+
     safe_title = html.escape(title)
 
     return f"""<!DOCTYPE html>
+
 <html lang="en">
+
 <head>
+
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<meta name="viewport"
+content="width=device-width, initial-scale=1.0">
 
 <title>{safe_title} | {SITE_NAME}</title>
 
 <meta name="description"
-content="{html.escape(title)} — practical guidance for strength, mobility and healthy aging.">
+content="{safe_title} — practical guidance for strength, mobility and healthy aging.">
 
 <style>
 
@@ -346,11 +500,18 @@ content="{html.escape(title)} — practical guidance for strength, mobility and 
     box-sizing: border-box;
 }}
 
+html {{
+    scroll-behavior: smooth;
+}}
+
 body {{
     margin: 0;
-    background: #f7f7f3;
-    color: #171717;
-    font-family: Arial, Helvetica, sans-serif;
+    background: #f4f3ed;
+    color: #13211d;
+    font-family:
+        Arial,
+        Helvetica,
+        sans-serif;
     line-height: 1.75;
 }}
 
@@ -359,48 +520,89 @@ nav {{
     display: flex;
     justify-content: space-between;
     align-items: center;
-    border-bottom: 1px solid #deded8;
-    background: rgba(247,247,243,.96);
+    background: #0b1715;
+    color: white;
 }}
 
 .logo {{
-    font-size: 20px;
+    font-size: 21px;
     font-weight: 800;
-    letter-spacing: -0.5px;
+    letter-spacing: -1px;
+}}
+
+.logo span {{
+    color: #b7f36b;
 }}
 
 .nav-link {{
+    color: white;
     text-decoration: none;
-    color: #171717;
-    font-size: 14px;
+    font-size: 13px;
 }}
 
 .hero {{
+    position: relative;
+    min-height: 550px;
+    display: flex;
+    align-items: end;
+    overflow: hidden;
+    color: white;
+    background: #10201b;
+}}
+
+.hero-bg {{
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}}
+
+.hero-overlay {{
+    position: absolute;
+    inset: 0;
+    background:
+        linear-gradient(
+            90deg,
+            rgba(5,18,14,.88),
+            rgba(5,18,14,.2)
+        ),
+        linear-gradient(
+            0deg,
+            rgba(5,18,14,.65),
+            transparent
+        );
+}}
+
+.hero-content {{
+    position: relative;
+    z-index: 2;
     max-width: 1100px;
-    margin: 0 auto;
-    padding: 90px 7% 70px;
+    width: 100%;
+    margin: auto;
+    padding: 90px 7%;
 }}
 
 .eyebrow {{
+    color: #b7f36b;
     text-transform: uppercase;
-    letter-spacing: 2px;
-    font-size: 12px;
-    font-weight: 700;
-    opacity: .55;
+    letter-spacing: 3px;
+    font-size: 11px;
+    font-weight: 800;
 }}
 
 h1 {{
     max-width: 900px;
-    font-size: clamp(42px, 7vw, 78px);
-    line-height: 1.02;
+    font-size: clamp(45px, 7vw, 85px);
+    line-height: .95;
     letter-spacing: -4px;
-    margin: 20px 0;
+    margin: 18px 0;
 }}
 
 .article {{
     max-width: 820px;
-    margin: 0 auto;
-    padding: 20px 7% 90px;
+    margin: auto;
+    padding: 80px 7% 100px;
 }}
 
 .article p {{
@@ -408,9 +610,9 @@ h1 {{
 }}
 
 .article h2 {{
-    margin-top: 55px;
-    font-size: 32px;
-    line-height: 1.15;
+    margin-top: 60px;
+    font-size: 34px;
+    line-height: 1.1;
     letter-spacing: -1px;
 }}
 
@@ -419,89 +621,95 @@ h1 {{
     font-size: 23px;
 }}
 
-.article ul {{
-    padding-left: 24px;
-}}
-
 .article li {{
     margin: 10px 0;
 }}
 
 .cta {{
-    margin-top: 70px;
+    margin-top: 75px;
     padding: 45px;
     border-radius: 28px;
-    background: #171717;
+    background: #0b1715;
     color: white;
 }}
 
 .cta h2 {{
     margin-top: 0;
-    font-size: 34px;
+    font-size: 35px;
 }}
 
 .cta p {{
-    opacity: .82;
+    color: rgba(255,255,255,.72);
 }}
 
 .button {{
     display: inline-block;
-    margin-top: 20px;
-    padding: 15px 24px;
+    margin-top: 15px;
+    padding: 15px 23px;
     border-radius: 999px;
-    background: white;
-    color: #171717;
+    background: #b7f36b;
+    color: #10201b;
     text-decoration: none;
-    font-weight: 700;
+    font-weight: 800;
 }}
 
 .disclosure {{
-    margin-top: 22px;
-    font-size: 12px;
-    opacity: .55;
+    margin-top: 20px;
+    font-size: 11px;
+    opacity: .5;
 }}
 
 footer {{
     padding: 45px 7%;
-    border-top: 1px solid #deded8;
     text-align: center;
-    font-size: 13px;
-    opacity: .55;
-}}
-
-@media (max-width: 650px) {{
-
-    .hero {{
-        padding-top: 55px;
-    }}
-
-    h1 {{
-        letter-spacing: -2px;
-    }}
-
-    .article p {{
-        font-size: 17px;
-    }}
-
-    .cta {{
-        padding: 30px;
-    }}
-
+    background: #07110f;
+    color: white;
+    font-size: 12px;
 }}
 
 </style>
+
 </head>
 
 <body>
 
 <nav>
-    <div class="logo">{SITE_NAME}</div>
-    <a class="nav-link" href="../index.html">Home</a>
+
+    <div class="logo">
+        Stronger<span>Years</span>
+    </div>
+
+    <a
+        class="nav-link"
+        href="../index.html"
+    >
+        Home
+    </a>
+
 </nav>
 
 <header class="hero">
-    <div class="eyebrow">Healthy aging · Strength · Vitality</div>
-    <h1>{safe_title}</h1>
+
+    <img
+        class="hero-bg"
+        src="{HERO_IMAGE}"
+        alt="Active older adult outdoors"
+    >
+
+    <div class="hero-overlay"></div>
+
+    <div class="hero-content">
+
+        <div class="eyebrow">
+            Strength · Vitality · Healthy aging
+        </div>
+
+        <h1>
+            {safe_title}
+        </h1>
+
+    </div>
+
 </header>
 
 <main class="article">
@@ -510,19 +718,23 @@ footer {{
 
 <section class="cta">
 
-    <h2>Want to explore the nutrition side?</h2>
+    <h2>
+        Want to explore the nutrition side?
+    </h2>
 
     <p>
-        Amino acids are one part of the broader nutrition conversation
-        around maintaining muscle and supporting an active lifestyle.
-        If you'd like to learn more, you can explore the formula below.
+        Amino acids are one part of the broader nutrition
+        conversation around maintaining muscle and supporting
+        an active lifestyle.
     </p>
 
-    <a class="button"
-       href="{AFFILIATE_LINK}"
-       target="_blank"
-       rel="nofollow sponsored">
-       Explore the Formula
+    <a
+        class="button"
+        href="{AFFILIATE_LINK}"
+        target="_blank"
+        rel="nofollow sponsored"
+    >
+        Explore the Formula →
     </a>
 
     <div class="disclosure">
@@ -538,27 +750,39 @@ footer {{
 </footer>
 
 </body>
+
 </html>
 """
 
 
-# =========================
+# =========================================================
 # PREMIUM HOMEPAGE
-# =========================
+# =========================================================
 
 def build_homepage():
+
     articles = []
 
     if os.path.exists(CONTENT_DIR):
+
         for filename in os.listdir(CONTENT_DIR):
 
             if not filename.endswith(".html"):
                 continue
 
-            path = os.path.join(CONTENT_DIR, filename)
+            path = os.path.join(
+                CONTENT_DIR,
+                filename,
+            )
 
             try:
-                with open(path, "r", encoding="utf-8") as f:
+
+                with open(
+                    path,
+                    "r",
+                    encoding="utf-8",
+                ) as f:
+
                     content = f.read()
 
                 match = re.search(
@@ -568,10 +792,11 @@ def build_homepage():
                 )
 
                 if match:
+
                     title = re.sub(
                         r"\s+",
                         " ",
-                        match.group(1)
+                        match.group(1),
                     ).strip()
 
                     articles.append(
@@ -584,19 +809,54 @@ def build_homepage():
     articles = sorted(
         articles,
         key=lambda x: x[1],
-        reverse=True
-    )[:12]
+        reverse=True,
+    )[:8]
 
     cards = []
 
-    for title, filename in articles:
+    for i, (title, filename) in enumerate(
+        articles
+    ):
+
+        image = CARD_IMAGES[
+            i % len(CARD_IMAGES)
+        ]
 
         cards.append(
             f"""
-            <a class="card" href="content/{html.escape(filename)}">
-                <div class="card-label">GUIDE</div>
-                <h3>{html.escape(title)}</h3>
-                <span>Read guide →</span>
+            <a
+                class="guide-card reveal"
+                href="content/{html.escape(filename)}"
+            >
+
+                <div class="card-image">
+
+                    <img
+                        src="{image}"
+                        alt="{html.escape(title)}"
+                        loading="lazy"
+                    >
+
+                    <div class="card-gradient"></div>
+
+                    <span class="card-tag">
+                        GUIDE
+                    </span>
+
+                </div>
+
+                <div class="card-content">
+
+                    <h3>
+                        {html.escape(title)}
+                    </h3>
+
+                    <span class="read-link">
+                        Read guide <b>→</b>
+                    </span>
+
+                </div>
+
             </a>
             """
         )
@@ -604,6 +864,7 @@ def build_homepage():
     cards_html = "\n".join(cards)
 
     return f"""<!DOCTYPE html>
+
 <html lang="en">
 
 <head>
@@ -613,204 +874,590 @@ def build_homepage():
 <meta name="viewport"
 content="width=device-width, initial-scale=1.0">
 
-<title>{SITE_NAME} — Age well. Live strong.</title>
+<title>
+{SITE_NAME} — Age well. Live strong.
+</title>
 
-<meta name="description"
-content="Practical ideas for strength, vitality, mobility and healthy aging.">
+<meta
+name="description"
+content="Practical guides for strength, mobility, recovery, nutrition and healthy aging."
+>
 
 <style>
+
+:root {{
+    --ink: #10201b;
+    --muted: #66716c;
+    --cream: #f4f3ed;
+    --white: #ffffff;
+    --green: #b7f36b;
+    --dark: #0b1715;
+}}
 
 * {{
     box-sizing: border-box;
 }}
 
-body {{
-    margin: 0;
-    background: #f7f7f3;
-    color: #151515;
-    font-family: Arial, Helvetica, sans-serif;
+html {{
+    scroll-behavior: smooth;
 }}
 
-nav {{
-    padding: 25px 7%;
+body {{
+    margin: 0;
+    background: var(--cream);
+    color: var(--ink);
+    font-family:
+        Arial,
+        Helvetica,
+        sans-serif;
+    overflow-x: hidden;
+}}
+
+a {{
+    color: inherit;
+}}
+
+.nav {{
+    position: absolute;
+    z-index: 20;
+    top: 0;
+    left: 0;
+    width: 100%;
+    padding: 25px 6%;
     display: flex;
-    justify-content: space-between;
     align-items: center;
-    background: rgba(247,247,243,.95);
+    justify-content: space-between;
+    color: white;
 }}
 
 .logo {{
-    font-size: 21px;
+    font-size: 22px;
     font-weight: 800;
-    letter-spacing: -.7px;
+    letter-spacing: -1px;
 }}
 
-.nav-text {{
+.logo span {{
+    color: var(--green);
+}}
+
+.nav-links {{
+    display: flex;
+    gap: 32px;
+}}
+
+.nav-links a {{
+    color: white;
+    text-decoration: none;
     font-size: 13px;
-    opacity: .55;
+    opacity: .88;
+    transition: opacity .2s ease;
+}}
+
+.nav-links a:hover {{
+    opacity: 1;
 }}
 
 .hero {{
-    min-height: 78vh;
+    min-height: 94vh;
+    position: relative;
     display: flex;
     align-items: center;
-    padding: 70px 7%;
+    overflow: hidden;
+    color: white;
+    background: #18251f;
 }}
 
-.hero-inner {{
-    max-width: 1050px;
+.hero-image {{
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+    transform: scale(1.05);
+    animation: heroZoom 12s ease-out forwards;
+}}
+
+.hero-overlay {{
+    position: absolute;
+    inset: 0;
+    background:
+        linear-gradient(
+            90deg,
+            rgba(5,18,14,.9) 0%,
+            rgba(5,18,14,.63) 42%,
+            rgba(5,18,14,.1) 78%
+        ),
+        linear-gradient(
+            0deg,
+            rgba(5,18,14,.55),
+            transparent 55%
+        );
+}}
+
+.hero-content {{
+    position: relative;
+    z-index: 2;
+    width: 100%;
+    max-width: 1250px;
+    margin: auto;
+    padding: 150px 6% 90px;
 }}
 
 .eyebrow {{
     text-transform: uppercase;
-    letter-spacing: 3px;
-    font-size: 12px;
-    font-weight: 700;
-    opacity: .5;
+    letter-spacing: 4px;
+    font-size: 11px;
+    font-weight: 800;
+    color: var(--green);
 }}
 
-h1 {{
-    font-size: clamp(64px, 11vw, 150px);
-    line-height: .88;
+.hero h1 {{
+    max-width: 900px;
+    margin: 22px 0;
+    font-size: clamp(65px, 9vw, 140px);
+    line-height: .86;
     letter-spacing: -9px;
-    max-width: 1000px;
-    margin: 25px 0;
+    font-weight: 800;
 }}
 
-.hero p {{
-    max-width: 620px;
-    font-size: 21px;
-    line-height: 1.55;
-    opacity: .68;
+.hero h1 span {{
+    color: var(--green);
+}}
+
+.hero-copy {{
+    max-width: 590px;
+    font-size: 19px;
+    line-height: 1.6;
+    color: rgba(255,255,255,.82);
+}}
+
+.hero-button {{
+    display: inline-flex;
+    align-items: center;
+    gap: 14px;
+    margin-top: 32px;
+    padding: 16px 25px;
+    background: var(--green);
+    color: #13200f;
+    border-radius: 999px;
+    text-decoration: none;
+    font-weight: 800;
+    transition:
+        transform .25s ease,
+        box-shadow .25s ease;
+}}
+
+.hero-button:hover {{
+    transform: translateY(-4px);
+    box-shadow: 0 15px 35px rgba(183,243,107,.2);
+}}
+
+.hero-button b {{
+    font-size: 20px;
 }}
 
 .scroll {{
-    margin-top: 50px;
-    font-size: 12px;
-    letter-spacing: 2px;
+    margin-top: 65px;
+    font-size: 10px;
+    letter-spacing: 3px;
     text-transform: uppercase;
-    opacity: .45;
+    opacity: .6;
+    animation: float 2s ease-in-out infinite;
 }}
 
 .section {{
-    padding: 110px 7%;
+    padding: 120px 6%;
 }}
 
 .section-inner {{
-    max-width: 1200px;
+    max-width: 1250px;
     margin: auto;
 }}
 
-.section-title {{
-    max-width: 700px;
-    font-size: clamp(42px, 6vw, 76px);
-    line-height: 1;
-    letter-spacing: -4px;
-}}
-
-.section-intro {{
-    max-width: 650px;
-    font-size: 18px;
-    line-height: 1.7;
-    opacity: .65;
-}}
-
-.grid {{
-    margin-top: 65px;
+.split {{
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 18px;
+    grid-template-columns: 1fr 1fr;
+    gap: 90px;
+    align-items: center;
 }}
 
-.card {{
-    display: block;
-    text-decoration: none;
-    color: #151515;
-    background: white;
-    border: 1px solid #e3e3dd;
-    border-radius: 25px;
-    padding: 32px;
-    min-height: 270px;
-    transition: transform .25s ease;
+.big-heading {{
+    font-size: clamp(45px, 6vw, 78px);
+    line-height: .98;
+    letter-spacing: -4px;
+    margin: 20px 0 28px;
 }}
 
-.card:hover {{
-    transform: translateY(-5px);
+.body-copy {{
+    max-width: 600px;
+    font-size: 18px;
+    line-height: 1.75;
+    color: var(--muted);
 }}
 
-.card-label {{
-    font-size: 10px;
-    font-weight: 800;
-    letter-spacing: 2px;
-    opacity: .4;
+.story-image {{
+    width: 100%;
+    height: 620px;
+    object-fit: cover;
+    border-radius: 30px;
+    box-shadow: 0 25px 70px rgba(0,0,0,.15);
+    transition: transform .6s ease;
 }}
 
-.card h3 {{
-    font-size: 27px;
-    line-height: 1.12;
-    letter-spacing: -1px;
+.story-image:hover {{
+    transform: scale(1.015);
+}}
+
+.stat-row {{
+    display: grid;
+    grid-template-columns: repeat(4,1fr);
+    gap: 14px;
     margin-top: 45px;
 }}
 
-.card span {{
-    font-size: 13px;
-    opacity: .55;
+.stat {{
+    padding: 20px;
+    border-radius: 18px;
+    background: rgba(255,255,255,.7);
+    border: 1px solid rgba(0,0,0,.07);
+    transition:
+        transform .25s ease,
+        box-shadow .25s ease;
 }}
 
-.dark {{
-    background: #171717;
+.stat:hover {{
+    transform: translateY(-5px);
+    box-shadow: 0 15px 30px rgba(0,0,0,.08);
+}}
+
+.stat-icon {{
+    font-size: 25px;
+}}
+
+.stat strong {{
+    display: block;
+    margin-top: 10px;
+    font-size: 13px;
+}}
+
+.guides {{
+    background: var(--dark);
     color: white;
 }}
 
-.pill-row {{
+.guides-heading {{
     display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
-    margin-top: 40px;
+    justify-content: space-between;
+    align-items: end;
+    gap: 30px;
 }}
 
-.pill {{
-    border: 1px solid #cfcfc7;
+.guides-heading .big-heading {{
+    margin-bottom: 0;
+}}
+
+.guide-intro {{
+    max-width: 530px;
+    color: rgba(255,255,255,.62);
+    line-height: 1.7;
+}}
+
+.guide-grid {{
+    margin-top: 60px;
+    display: grid;
+    grid-template-columns: repeat(4,1fr);
+    gap: 18px;
+}}
+
+.guide-card {{
+    text-decoration: none;
+    border-radius: 25px;
+    overflow: hidden;
+    background: #17231f;
+    border: 1px solid rgba(255,255,255,.12);
+    transition:
+        transform .35s ease,
+        border-color .35s ease,
+        box-shadow .35s ease;
+}}
+
+.guide-card:hover {{
+    transform: translateY(-9px);
+    border-color: rgba(183,243,107,.55);
+    box-shadow: 0 25px 55px rgba(0,0,0,.25);
+}}
+
+.card-image {{
+    height: 235px;
+    position: relative;
+    overflow: hidden;
+}}
+
+.card-image img {{
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform .6s ease;
+}}
+
+.guide-card:hover .card-image img {{
+    transform: scale(1.08);
+}}
+
+.card-gradient {{
+    position: absolute;
+    inset: 0;
+    background:
+        linear-gradient(
+            0deg,
+            rgba(0,0,0,.55),
+            transparent 60%
+        );
+}}
+
+.card-tag {{
+    position: absolute;
+    left: 18px;
+    bottom: 17px;
+    padding: 7px 10px;
     border-radius: 999px;
-    padding: 12px 18px;
+    background: var(--green);
+    color: #14200f;
+    font-size: 9px;
+    font-weight: 900;
+    letter-spacing: 1.5px;
+}}
+
+.card-content {{
+    padding: 25px;
+}}
+
+.card-content h3 {{
+    margin: 0 0 25px;
+    font-size: 22px;
+    line-height: 1.16;
+    letter-spacing: -.7px;
+}}
+
+.read-link {{
+    color: rgba(255,255,255,.62);
     font-size: 13px;
 }}
 
-.dark .pill {{
-    border-color: #555;
+.read-link b {{
+    color: var(--green);
+    margin-left: 7px;
+}}
+
+.cta-section {{
+    position: relative;
+    min-height: 620px;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+}}
+
+.cta-image {{
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}}
+
+.cta-overlay {{
+    position: absolute;
+    inset: 0;
+    background:
+        linear-gradient(
+            90deg,
+            rgba(244,243,237,.98) 0%,
+            rgba(244,243,237,.82) 43%,
+            rgba(244,243,237,.08) 100%
+        );
+}}
+
+.cta-content {{
+    position: relative;
+    z-index: 2;
+    max-width: 1250px;
+    width: 100%;
+    margin: auto;
+    padding: 90px 6%;
+}}
+
+.cta-content h2 {{
+    max-width: 620px;
+    font-size: clamp(48px, 6vw, 82px);
+    line-height: .95;
+    letter-spacing: -4px;
+    margin: 18px 0;
+}}
+
+.cta-content p {{
+    max-width: 520px;
+    color: var(--muted);
+    line-height: 1.7;
+    font-size: 18px;
+}}
+
+.outline-button {{
+    display: inline-block;
+    margin-top: 20px;
+    padding: 15px 22px;
+    border: 1px solid #17211e;
+    border-radius: 999px;
+    text-decoration: none;
+    font-weight: 700;
+    transition:
+        background .25s ease,
+        color .25s ease,
+        transform .25s ease;
+}}
+
+.outline-button:hover {{
+    background: #10201b;
+    color: white;
+    transform: translateY(-3px);
 }}
 
 .disclosure {{
     max-width: 700px;
-    margin-top: 45px;
-    font-size: 12px;
-    opacity: .45;
+    margin-top: 40px;
+    color: var(--muted);
+    font-size: 11px;
 }}
 
 footer {{
-    padding: 55px 7%;
-    border-top: 1px solid #deded8;
-    text-align: center;
-    font-size: 13px;
-    opacity: .5;
+    background: #07110f;
+    color: white;
+    padding: 55px 6%;
 }}
 
-@media (max-width: 800px) {{
+.footer-inner {{
+    max-width: 1250px;
+    margin: auto;
+    display: flex;
+    justify-content: space-between;
+    gap: 30px;
+}}
+
+.footer-note {{
+    max-width: 430px;
+    color: rgba(255,255,255,.45);
+    font-size: 12px;
+    line-height: 1.6;
+}}
+
+.reveal {{
+    opacity: 0;
+    transform: translateY(25px);
+    animation: reveal .8s ease forwards;
+}}
+
+.guide-card:nth-child(2) {{
+    animation-delay: .08s;
+}}
+
+.guide-card:nth-child(3) {{
+    animation-delay: .16s;
+}}
+
+.guide-card:nth-child(4) {{
+    animation-delay: .24s;
+}}
+
+@keyframes reveal {{
+
+    to {{
+        opacity: 1;
+        transform: translateY(0);
+    }}
+
+}}
+
+@keyframes heroZoom {{
+
+    from {{
+        transform: scale(1.05);
+    }}
+
+    to {{
+        transform: scale(1);
+    }}
+
+}}
+
+@keyframes float {{
+
+    0%,100% {{
+        transform: translateY(0);
+    }}
+
+    50% {{
+        transform: translateY(7px);
+    }}
+
+}}
+
+@media (max-width: 950px) {{
+
+    .nav-links {{
+        display: none;
+    }}
+
+    .split {{
+        grid-template-columns: 1fr;
+        gap: 50px;
+    }}
+
+    .story-image {{
+        height: 450px;
+    }}
+
+    .guide-grid {{
+        grid-template-columns: repeat(2,1fr);
+    }}
+
+    .stat-row {{
+        grid-template-columns: repeat(2,1fr);
+    }}
+
+}}
+
+@media (max-width: 600px) {{
 
     .hero {{
-        min-height: 70vh;
+        min-height: 88vh;
     }}
 
-    h1 {{
-        letter-spacing: -5px;
+    .hero h1 {{
+        letter-spacing: -4px;
     }}
 
-    .grid {{
-        grid-template-columns: 1fr;
+    .hero-copy {{
+        font-size: 17px;
     }}
 
     .section {{
-        padding: 75px 7%;
+        padding: 80px 6%;
+    }}
+
+    .guide-grid {{
+        grid-template-columns: 1fr;
+    }}
+
+    .stat-row {{
+        grid-template-columns: 1fr 1fr;
+    }}
+
+    .cta-section {{
+        min-height: 560px;
+    }}
+
+    .footer-inner {{
+        flex-direction: column;
     }}
 
 }}
@@ -821,107 +1468,224 @@ footer {{
 
 <body>
 
-<nav>
-    <div class="logo">{SITE_NAME}</div>
-    <div class="nav-text">Healthy aging, thoughtfully.</div>
+<nav class="nav">
+
+    <div class="logo">
+        Stronger<span>Years</span>
+    </div>
+
+    <div class="nav-links">
+
+        <a href="#guides">
+            Guides
+        </a>
+
+        <a href="#approach">
+            Approach
+        </a>
+
+        <a href="#start">
+            Start
+        </a>
+
+    </div>
+
 </nav>
 
 <header class="hero">
 
-    <div class="hero-inner">
+    <img
+        class="hero-image"
+        src="{HERO_IMAGE}"
+        alt="Active older adult exercising outdoors"
+    >
+
+    <div class="hero-overlay"></div>
+
+    <div class="hero-content">
 
         <div class="eyebrow">
-            Strength · Vitality · Healthy aging
+            Healthy aging · Strength · Vitality
         </div>
 
         <h1>
             Age well.<br>
-            Live strong.
+            <span>Live strong.</span>
         </h1>
 
-        <p>
-            Practical ideas for building better habits around strength,
-            mobility, recovery and everyday vitality — without the hype.
+        <p class="hero-copy">
+            Practical guides, simple habits and thoughtful ideas
+            for maintaining strength, mobility and everyday vitality
+            as you get older.
         </p>
 
+        <a
+            class="hero-button"
+            href="#guides"
+        >
+            Explore the guides
+            <b>→</b>
+        </a>
+
         <div class="scroll">
-            Explore the guides ↓
+            Scroll to explore ↓
         </div>
 
     </div>
 
 </header>
 
-<section class="section">
+<section
+    class="section"
+    id="approach"
+>
 
-    <div class="section-inner">
+    <div class="section-inner split">
 
-        <div class="eyebrow">
-            A different approach
+        <div>
+
+            <div class="eyebrow">
+                The bigger picture
+            </div>
+
+            <h2 class="big-heading">
+                Your best years aren't behind you.
+            </h2>
+
+            <p class="body-copy">
+                Healthy aging is about staying engaged with the
+                things you enjoy. Movement, nutrition, recovery
+                and consistent habits can all play a role in
+                supporting an active lifestyle.
+            </p>
+
+            <div class="stat-row">
+
+                <div class="stat">
+                    <div class="stat-icon">
+                        🏋️
+                    </div>
+                    <strong>
+                        Strength
+                    </strong>
+                </div>
+
+                <div class="stat">
+                    <div class="stat-icon">
+                        🧘
+                    </div>
+                    <strong>
+                        Mobility
+                    </strong>
+                </div>
+
+                <div class="stat">
+                    <div class="stat-icon">
+                        🥗
+                    </div>
+                    <strong>
+                        Nutrition
+                    </strong>
+                </div>
+
+                <div class="stat">
+                    <div class="stat-icon">
+                        ⚡
+                    </div>
+                    <strong>
+                        Vitality
+                    </strong>
+                </div>
+
+            </div>
+
         </div>
 
-        <h2 class="section-title">
-            Your best years aren't behind you.
-        </h2>
-
-        <p class="section-intro">
-            Getting older doesn't mean giving up on strength or an active
-            life. Small, consistent choices around movement, nutrition,
-            sleep and recovery can help you build a lifestyle that supports
-            the way you want to live.
-        </p>
+        <img
+            class="story-image"
+            src="{STORY_IMAGE}"
+            alt="Active older adult exercising"
+            loading="lazy"
+        >
 
     </div>
 
 </section>
 
-<section class="section">
+<section
+    class="section guides"
+    id="guides"
+>
 
     <div class="section-inner">
 
-        <div class="eyebrow">
-            Latest guides
+        <div class="guides-heading">
+
+            <div>
+
+                <div class="eyebrow">
+                    Latest guides
+                </div>
+
+                <h2 class="big-heading">
+                    Ideas worth reading.
+                </h2>
+
+            </div>
+
+            <p class="guide-intro">
+                Practical articles about strength, nutrition,
+                recovery, mobility and healthy aging.
+            </p>
+
         </div>
 
-        <h2 class="section-title">
-            Ideas worth reading.
-        </h2>
+        <div class="guide-grid">
 
-        <div class="grid">
             {cards_html}
+
         </div>
 
     </div>
 
 </section>
 
-<section class="section dark">
+<section
+    class="cta-section"
+    id="start"
+>
 
-    <div class="section-inner">
+    <img
+        class="cta-image"
+        src="{MOUNTAIN_IMAGE}"
+        alt="Older adult hiking outdoors"
+        loading="lazy"
+    >
+
+    <div class="cta-overlay"></div>
+
+    <div class="cta-content">
 
         <div class="eyebrow">
             Start simple
         </div>
 
-        <h2 class="section-title">
+        <h2>
             Better habits.<br>
             Stronger days.
         </h2>
 
-        <p class="section-intro">
+        <p>
             Explore practical approaches to movement, nutrition,
-            recovery and healthy aging.
+            recovery and healthy aging — one useful idea at a time.
         </p>
 
-        <div class="pill-row">
-
-            <div class="pill">Muscle & strength</div>
-            <div class="pill">Healthy aging</div>
-            <div class="pill">Nutrition</div>
-            <div class="pill">Recovery</div>
-            <div class="pill">Mobility</div>
-
-        </div>
+        <a
+            class="outline-button"
+            href="#guides"
+        >
+            Browse all guides →
+        </a>
 
         <div class="disclosure">
             {DISCLOSURE}
@@ -932,7 +1696,30 @@ footer {{
 </section>
 
 <footer>
-    © {datetime.now().year} {SITE_NAME}
+
+    <div class="footer-inner">
+
+        <div>
+
+            <div class="logo">
+                Stronger<span>Years</span>
+            </div>
+
+        </div>
+
+        <div class="footer-note">
+
+            Independent educational content about healthy aging,
+            strength, mobility and everyday wellness.
+
+            <br><br>
+
+            {DISCLOSURE}
+
+        </div>
+
+    </div>
+
 </footer>
 
 </body>
@@ -941,112 +1728,135 @@ footer {{
 """
 
 
-# =========================
+# =========================================================
 # MAIN AGENT
-# =========================
+# =========================================================
 
 def main():
 
-    os.makedirs(CONTENT_DIR, exist_ok=True)
+    os.makedirs(
+        CONTENT_DIR,
+        exist_ok=True
+    )
 
     existing_titles = get_existing_titles()
 
-    print("Existing articles:", len(existing_titles))
+    print(
+        "Existing articles:",
+        len(existing_titles)
+    )
 
-    # Rotate topics based on current number of articles
-    topic_index = len(existing_titles) % len(TOPICS)
-
-    topic = TOPICS[topic_index]
-
-    print("Selected topic:", topic)
+    topic_index = (
+        len(existing_titles)
+        % len(TOPICS)
+    )
 
     title = None
     body = None
 
-    # Try several topics if duplicate is encountered
     for offset in range(len(TOPICS)):
 
         selected_topic = TOPICS[
-            (topic_index + offset) % len(TOPICS)
+            (topic_index + offset)
+            % len(TOPICS)
         ]
 
-        print("Trying:", selected_topic)
+        print(
+            "Trying topic:",
+            selected_topic
+        )
 
         try:
+
             new_title, new_body = generate_article(
                 selected_topic,
-                existing_titles
+                existing_titles,
             )
 
         except Exception as e:
-            print("Generation failed:", e)
+
+            print(
+                "Generation failed:",
+                e
+            )
+
             continue
 
         if new_title and new_body:
 
             title = new_title
             body = new_body
+
             break
 
-    if not title:
-        print("No new article generated.")
-        build_homepage()
+    if title:
+
+        print(
+            "Generated article:",
+            title
+        )
+
+        timestamp = datetime.now().strftime(
+            "%Y-%m-%d-%H%M%S"
+        )
+
+        slug = slugify(title)
+
+        filename = (
+            f"{slug}-{timestamp}.html"
+        )
+
+        path = os.path.join(
+            CONTENT_DIR,
+            filename,
+        )
+
+        body_html = markdown_to_html(
+            body
+        )
+
+        page = article_html(
+            title,
+            body_html,
+        )
 
         with open(
-            "index.html",
+            path,
             "w",
-            encoding="utf-8"
+            encoding="utf-8",
         ) as f:
-            f.write(build_homepage())
 
-        return
+            f.write(page)
 
-    print("Generated:", title)
+        print(
+            "Saved article:",
+            path
+        )
 
-    timestamp = datetime.now().strftime(
-        "%Y-%m-%d-%H%M%S"
-    )
+    else:
 
-    slug = slugify(title)
+        print(
+            "No new article generated."
+        )
 
-    filename = (
-        f"{slug}-{timestamp}.html"
-    )
-
-    path = os.path.join(
-        CONTENT_DIR,
-        filename
-    )
-
-    body_html = markdown_to_html(body)
-
-    page = article_html(
-        title,
-        body_html
-    )
-
-    with open(
-        path,
-        "w",
-        encoding="utf-8"
-    ) as f:
-        f.write(page)
-
-    print("Saved article:", path)
-
-    # Rebuild homepage
+    # Always rebuild homepage
     homepage = build_homepage()
 
     with open(
         "index.html",
         "w",
-        encoding="utf-8"
+        encoding="utf-8",
     ) as f:
+
         f.write(homepage)
 
-    print("Homepage updated.")
+    print(
+        "Homepage updated."
+    )
 
-    print("Done.")
+    print(
+        "Agent finished successfully."
+    )
 
 
 if __name__ == "__main__":
