@@ -11,6 +11,8 @@ from datetime import datetime
 
 API_KEY = os.environ["OPENROUTER_API_KEY"]
 
+SITE_URL = "https://rasghsims.github.io/affiliate-agent"
+
 AFFILIATE_LINK = (
     "https://www.advancedbionutritionals.com/DS24/Advanced-Amino/"
     "Muscle-Mass-Loss/HD.htm#aff=Healthy_w0rld"
@@ -95,7 +97,7 @@ def ask_ai(prompt):
     headers = {
         "Authorization": f"Bearer {API_KEY}",
         "Content-Type": "application/json",
-        "HTTP-Referer": "https://rasghsims.github.io/affiliate-agent/",
+        "HTTP-Referer": SITE_URL,
         "X-Title": SITE_NAME,
     }
 
@@ -1369,12 +1371,10 @@ footer {{
 }}
 
 @keyframes reveal {{
-
     to {{
         opacity: 1;
         transform: translateY(0);
     }}
-
 }}
 
 @keyframes heroZoom {{
@@ -1729,6 +1729,67 @@ footer {{
 
 
 # =========================================================
+# SITEMAP GENERATOR
+# =========================================================
+
+def build_sitemap():
+
+    urls = [
+        f"{SITE_URL}/"
+    ]
+
+    if os.path.exists(CONTENT_DIR):
+
+        for filename in os.listdir(CONTENT_DIR):
+
+            if not filename.endswith(".html"):
+                continue
+
+            urls.append(
+                f"{SITE_URL}/{CONTENT_DIR}/{filename}"
+            )
+
+    urls = sorted(set(urls))
+
+    today = datetime.now().strftime(
+        "%Y-%m-%d"
+    )
+
+    sitemap_items = []
+
+    for url in urls:
+
+        sitemap_items.append(
+            f"""
+    <url>
+        <loc>{html.escape(url)}</loc>
+        <lastmod>{today}</lastmod>
+    </url>
+"""
+        )
+
+    sitemap = f"""<?xml version="1.0" encoding="UTF-8"?>
+<urlset
+    xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+>
+{''.join(sitemap_items)}
+</urlset>
+"""
+
+    with open(
+        "sitemap.xml",
+        "w",
+        encoding="utf-8",
+    ) as f:
+
+        f.write(sitemap)
+
+    print(
+        f"Sitemap updated with {len(urls)} URLs."
+    )
+
+
+# =========================================================
 # MAIN AGENT
 # =========================================================
 
@@ -1840,6 +1901,7 @@ def main():
         )
 
     # Always rebuild homepage
+
     homepage = build_homepage()
 
     with open(
@@ -1853,6 +1915,10 @@ def main():
     print(
         "Homepage updated."
     )
+
+    # Always rebuild sitemap
+
+    build_sitemap()
 
     print(
         "Agent finished successfully."
