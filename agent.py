@@ -29,44 +29,72 @@ MODEL = "openrouter/free"
 
 # =========================================================
 # VISUALS
-# No external image URLs: GitHub Pages renders a lightweight, self-contained design.
+# Local category images. The agent downloads them once into the repo,
+# then the website references the local files (not remote image URLs).
 # =========================================================
 
-HERO_IMAGE = ""
-STORY_IMAGE = ""
-MOUNTAIN_IMAGE = ""
-CARD_IMAGES = []
+IMAGE_SOURCES = {
+    "nutrition": "https://images.unsplash.com/photo-1498837167922-ddd27525d352?auto=format&fit=crop&w=1600&q=82",
+    "recovery": "https://images.unsplash.com/photo-1517836357463-d25dfeac3438?auto=format&fit=crop&w=1600&q=82",
+    "mobility": "https://images.unsplash.com/photo-1551632811-561732d1e306?auto=format&fit=crop&w=1600&q=82",
+    "habits": "https://images.unsplash.com/photo-1499209974431-9dddcece7f88?auto=format&fit=crop&w=1600&q=82",
+    "strength": "https://images.unsplash.com/photo-1538805060514-97d9cc17730c?auto=format&fit=crop&w=1600&q=82",
+}
+
+
+def image_category(title):
+    lower = title.lower()
+    if any(k in lower for k in ["nutrition", "protein", "amino", "food", "meal"]):
+        return "nutrition"
+    if any(k in lower for k in ["recovery", "exercise", "resistance", "workout", "training"]):
+        return "recovery"
+    if any(k in lower for k in ["mobility", "active", "movement", "walk"]):
+        return "mobility"
+    if any(k in lower for k in ["morning", "routine", "habits", "daily"]):
+        return "habits"
+    return "strength"
+
+
+def _fallback_svg(category, path):
+    labels = {
+        "nutrition": ("NUTRITION", "Nourish your strength"),
+        "recovery": ("RECOVERY", "Recover. Rebuild. Repeat."),
+        "mobility": ("MOBILITY", "Keep moving forward"),
+        "habits": ("DAILY HABITS", "Small habits. Stronger days."),
+        "strength": ("STRENGTH", "Build for the years ahead"),
+    }
+    label, headline = labels.get(category, labels["strength"])
+    svg = f"""<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 1600 900\">
+<defs><linearGradient id=\"g\" x1=\"0\" y1=\"0\" x2=\"1\" y2=\"1\"><stop stop-color=\"#07110f\"/><stop offset=\".55\" stop-color=\"#214a3a\"/><stop offset=\"1\" stop-color=\"#b7f36b\"/></linearGradient></defs>
+<rect width=\"1600\" height=\"900\" fill=\"url(#g)\"/><circle cx=\"1240\" cy=\"220\" r=\"300\" fill=\"#fff\" opacity=\".08\"/><path d=\"M0 760 C300 570 510 820 760 650 S1200 530 1600 690 V900 H0Z\" fill=\"#07110f\" opacity=\".45\"/>
+<text x=\"100\" y=\"150\" fill=\"#b7f36b\" font-family=\"Arial\" font-size=\"28\" font-weight=\"700\" letter-spacing=\"7\">{label}</text>
+<text x=\"100\" y=\"290\" fill=\"white\" font-family=\"Arial\" font-size=\"70\" font-weight=\"800\">{headline}</text>
+<text x=\"100\" y=\"805\" fill=\"white\" opacity=\".7\" font-family=\"Arial\" font-size=\"20\" letter-spacing=\"4\">STRONGER YEARS · AGE WELL · LIVE STRONG</text></svg>"""
+    Path(path).write_text(svg, encoding="utf-8")
+
 
 def topic_visual(title, filename):
-    text = html.escape(title[:48])
-    lower = title.lower()
-    if any(k in lower for k in ["nutrition", "protein", "amino"]):
-        label, icon = "NUTRITION", "M"
-    elif any(k in lower for k in ["recovery", "exercise", "resistance", "workout"]):
-        label, icon = "RECOVERY + MOVEMENT", "↗"
-    elif any(k in lower for k in ["mobility", "active", "movement"]):
-        label, icon = "MOBILITY", "∞"
-    elif any(k in lower for k in ["morning", "routine", "habits", "daily"]):
-        label, icon = "DAILY HABITS", "☀"
-    else:
-        label, icon = "STRENGTH + LONGEVITY", "＋"
-    safe_name = re.sub(r"[^a-z0-9-]+", "-", filename.lower()).strip("-")
-    asset_dir = os.path.join(CONTENT_DIR, "assets")
-    os.makedirs(asset_dir, exist_ok=True)
-    asset_path = os.path.join(asset_dir, safe_name + ".svg")
-    svg = (
-        '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 720">'
-        '<defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#07110f"/><stop offset=".55" stop-color="#214a3a"/><stop offset="1" stop-color="#b7f36b"/></linearGradient><radialGradient id="r"><stop offset="0" stop-color="#dff7b9" stop-opacity=".85"/><stop offset="1" stop-color="#dff7b9" stop-opacity="0"/></radialGradient></defs>'
-        '<rect width="1200" height="720" fill="url(#g)"/><circle cx="930" cy="145" r="260" fill="url(#r)" opacity=".7"/><circle cx="1010" cy="470" r="230" fill="#07110f" opacity=".22"/>'
-        '<path d="M0 610 C220 510 350 650 520 560 S850 430 1200 540 V720 H0Z" fill="#07110f" opacity=".35"/><path d="M80 120 L520 120" stroke="#b7f36b" stroke-width="3" opacity=".65"/>'
-        f'<text x="80" y="180" fill="#b7f36b" font-family="Arial" font-size="24" font-weight="700" letter-spacing="5">{label}</text>'
-        f'<text x="80" y="310" fill="white" font-family="Arial" font-size="86" font-weight="800">{icon}</text>'
-        f'<text x="80" y="390" fill="white" font-family="Arial" font-size="38" font-weight="700">{text}</text>'
-        '<text x="80" y="650" fill="white" opacity=".68" font-family="Arial" font-size="18" letter-spacing="3">STRONGER YEARS · AGE WELL · LIVE STRONG</text></svg>'
-    )
-    with open(asset_path, "w", encoding="utf-8") as f:
-        f.write(svg)
-    return "assets/" + os.path.basename(asset_path)
+    category = image_category(title)
+    asset_dir = Path(CONTENT_DIR) / "assets"
+    asset_dir.mkdir(parents=True, exist_ok=True)
+    safe = re.sub(r"[^a-z0-9-]+", "-", filename.lower()).strip("-")
+    image_path = asset_dir / f"{safe}.jpg"
+
+    if not image_path.exists():
+        try:
+            response = requests.get(IMAGE_SOURCES[category], timeout=30)
+            response.raise_for_status()
+            if len(response.content) < 10000:
+                raise ValueError("image response was unexpectedly small")
+            image_path.write_bytes(response.content)
+            print("Downloaded related image:", category, image_path)
+        except Exception as e:
+            print("Image download failed; using local SVG fallback:", e)
+            fallback = asset_dir / f"{safe}.svg"
+            _fallback_svg(category, fallback)
+            return "assets/" + fallback.name
+
+    return "assets/" + image_path.name
 
 # =========================================================
 # BUYER-INTENT TOPICS
