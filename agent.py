@@ -37,6 +37,37 @@ STORY_IMAGE = ""
 MOUNTAIN_IMAGE = ""
 CARD_IMAGES = []
 
+def topic_visual(title, filename):
+    text = html.escape(title[:48])
+    lower = title.lower()
+    if any(k in lower for k in ["nutrition", "protein", "amino"]):
+        label, icon = "NUTRITION", "M"
+    elif any(k in lower for k in ["recovery", "exercise", "resistance", "workout"]):
+        label, icon = "RECOVERY + MOVEMENT", "↗"
+    elif any(k in lower for k in ["mobility", "active", "movement"]):
+        label, icon = "MOBILITY", "∞"
+    elif any(k in lower for k in ["morning", "routine", "habits", "daily"]):
+        label, icon = "DAILY HABITS", "☀"
+    else:
+        label, icon = "STRENGTH + LONGEVITY", "＋"
+    safe_name = re.sub(r"[^a-z0-9-]+", "-", filename.lower()).strip("-")
+    asset_dir = os.path.join(CONTENT_DIR, "assets")
+    os.makedirs(asset_dir, exist_ok=True)
+    asset_path = os.path.join(asset_dir, safe_name + ".svg")
+    svg = (
+        '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 720">'
+        '<defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#07110f"/><stop offset=".55" stop-color="#214a3a"/><stop offset="1" stop-color="#b7f36b"/></linearGradient><radialGradient id="r"><stop offset="0" stop-color="#dff7b9" stop-opacity=".85"/><stop offset="1" stop-color="#dff7b9" stop-opacity="0"/></radialGradient></defs>'
+        '<rect width="1200" height="720" fill="url(#g)"/><circle cx="930" cy="145" r="260" fill="url(#r)" opacity=".7"/><circle cx="1010" cy="470" r="230" fill="#07110f" opacity=".22"/>'
+        '<path d="M0 610 C220 510 350 650 520 560 S850 430 1200 540 V720 H0Z" fill="#07110f" opacity=".35"/><path d="M80 120 L520 120" stroke="#b7f36b" stroke-width="3" opacity=".65"/>'
+        f'<text x="80" y="180" fill="#b7f36b" font-family="Arial" font-size="24" font-weight="700" letter-spacing="5">{label}</text>'
+        f'<text x="80" y="310" fill="white" font-family="Arial" font-size="86" font-weight="800">{icon}</text>'
+        f'<text x="80" y="390" fill="white" font-family="Arial" font-size="38" font-weight="700">{text}</text>'
+        '<text x="80" y="650" fill="white" opacity=".68" font-family="Arial" font-size="18" letter-spacing="3">STRONGER YEARS · AGE WELL · LIVE STRONG</text></svg>'
+    )
+    with open(asset_path, "w", encoding="utf-8") as f:
+        f.write(svg)
+    return "assets/" + os.path.basename(asset_path)
+
 # =========================================================
 # BUYER-INTENT TOPICS
 # =========================================================
@@ -278,6 +309,7 @@ Create a substantially different title from existing articles.
             "",
             line,
         ).strip()
+        cleaned = re.sub(r"\*+", "", cleaned).strip()
 
         if cleaned:
 
@@ -325,6 +357,24 @@ def markdown_to_html(text):
 
     in_list = False
 
+    def inline_format(value):
+
+        # Escape first, then safely restore only the Markdown emphasis
+        # that the AI is allowed to generate. This prevents literal **
+        # markers from appearing on the live site.
+        value = html.escape(value)
+        value = re.sub(
+            r"\*\*(.+?)\*\*",
+            r"<strong>\1</strong>",
+            value,
+        )
+        value = re.sub(
+            r"(?<!\*)\*([^*\n]+?)\*(?!\*)",
+            r"<em>\1</em>",
+            value,
+        )
+        return value
+
     def flush_paragraph():
 
         nonlocal paragraph
@@ -340,7 +390,7 @@ def markdown_to_html(text):
 
                 output.append(
                     "<p>"
-                    + html.escape(joined)
+                    + inline_format(joined)
                     + "</p>"
                 )
 
@@ -375,7 +425,7 @@ def markdown_to_html(text):
 
             output.append(
                 "<h3>"
-                + html.escape(heading)
+                + inline_format(heading)
                 + "</h3>"
             )
 
@@ -390,7 +440,7 @@ def markdown_to_html(text):
 
             output.append(
                 "<h2>"
-                + html.escape(heading)
+                + inline_format(heading)
                 + "</h2>"
             )
 
@@ -424,7 +474,7 @@ def markdown_to_html(text):
 
             output.append(
                 "<li>"
-                + html.escape(item)
+                + inline_format(item)
                 + "</li>"
             )
 
@@ -446,7 +496,7 @@ def markdown_to_html(text):
 # ARTICLE PAGE
 # =========================================================
 
-def article_html(title, body_html):
+def article_html(title, body_html, visual_path):
 
     safe_title = html.escape(title)
 
@@ -667,7 +717,7 @@ footer {{
 
 <header class="hero">
 
-    <div class="hero-bg" aria-hidden="true"></div>
+    <div class="hero-bg" style="background-image:url('{visual_path}');" aria-hidden="true"></div>
 
     <div class="hero-overlay"></div>
 
@@ -791,7 +841,7 @@ def build_homepage():
         articles
     ):
 
-        image = ""
+        image = topic_visual(title, slugify(title))
 
         cards.append(
             f"""
@@ -802,7 +852,7 @@ def build_homepage():
 
                 <div class="card-image">
 
-                    <div class="card-art" aria-hidden="true"></div>
+                    <div class="card-art" style="background-image:url('content/{image}');" aria-hidden="true"></div>
 
                     <div class="card-gradient"></div>
 
@@ -1793,9 +1843,12 @@ def main():
             body
         )
 
+        visual_path = topic_visual(title, slug)
+
         page = article_html(
             title,
             body_html,
+            visual_path,
         )
 
         with open(
