@@ -2,8 +2,10 @@ import os
 import re
 import time
 import html
-import requests
+from pathlib import Path
 from datetime import datetime
+import requests
+
 
 # =========================================================
 # SETTINGS
@@ -17,6 +19,7 @@ AFFILIATE_LINK = (
 )
 
 SITE_NAME = "StrongerYears"
+SITE_URL = "https://rasghsims.github.io/affiliate-agent"
 
 DISCLOSURE = (
     "I may earn a commission if you buy through links on this page, "
@@ -24,77 +27,10 @@ DISCLOSURE = (
 )
 
 CONTENT_DIR = "content"
+ASSET_DIR = Path(CONTENT_DIR) / "assets"
 
 MODEL = "openrouter/free"
 
-# =========================================================
-# VISUALS
-# Local category images. The agent downloads them once into the repo,
-# then the website references the local files (not remote image URLs).
-# =========================================================
-
-IMAGE_SOURCES = {
-    "nutrition": "https://images.unsplash.com/photo-1498837167922-ddd27525d352?auto=format&fit=crop&w=1600&q=82",
-    "recovery": "https://images.unsplash.com/photo-1517836357463-d25dfeac3438?auto=format&fit=crop&w=1600&q=82",
-    "mobility": "https://images.unsplash.com/photo-1551632811-561732d1e306?auto=format&fit=crop&w=1600&q=82",
-    "habits": "https://images.unsplash.com/photo-1499209974431-9dddcece7f88?auto=format&fit=crop&w=1600&q=82",
-    "strength": "https://images.unsplash.com/photo-1538805060514-97d9cc17730c?auto=format&fit=crop&w=1600&q=82",
-}
-
-
-def image_category(title):
-    lower = title.lower()
-    if any(k in lower for k in ["nutrition", "protein", "amino", "food", "meal"]):
-        return "nutrition"
-    if any(k in lower for k in ["recovery", "exercise", "resistance", "workout", "training"]):
-        return "recovery"
-    if any(k in lower for k in ["mobility", "active", "movement", "walk"]):
-        return "mobility"
-    if any(k in lower for k in ["morning", "routine", "habits", "daily"]):
-        return "habits"
-    return "strength"
-
-
-def _fallback_svg(category, path):
-    labels = {
-        "nutrition": ("NUTRITION", "Nourish your strength"),
-        "recovery": ("RECOVERY", "Recover. Rebuild. Repeat."),
-        "mobility": ("MOBILITY", "Keep moving forward"),
-        "habits": ("DAILY HABITS", "Small habits. Stronger days."),
-        "strength": ("STRENGTH", "Build for the years ahead"),
-    }
-    label, headline = labels.get(category, labels["strength"])
-    svg = f"""<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 1600 900\">
-<defs><linearGradient id=\"g\" x1=\"0\" y1=\"0\" x2=\"1\" y2=\"1\"><stop stop-color=\"#07110f\"/><stop offset=\".55\" stop-color=\"#214a3a\"/><stop offset=\"1\" stop-color=\"#b7f36b\"/></linearGradient></defs>
-<rect width=\"1600\" height=\"900\" fill=\"url(#g)\"/><circle cx=\"1240\" cy=\"220\" r=\"300\" fill=\"#fff\" opacity=\".08\"/><path d=\"M0 760 C300 570 510 820 760 650 S1200 530 1600 690 V900 H0Z\" fill=\"#07110f\" opacity=\".45\"/>
-<text x=\"100\" y=\"150\" fill=\"#b7f36b\" font-family=\"Arial\" font-size=\"28\" font-weight=\"700\" letter-spacing=\"7\">{label}</text>
-<text x=\"100\" y=\"290\" fill=\"white\" font-family=\"Arial\" font-size=\"70\" font-weight=\"800\">{headline}</text>
-<text x=\"100\" y=\"805\" fill=\"white\" opacity=\".7\" font-family=\"Arial\" font-size=\"20\" letter-spacing=\"4\">STRONGER YEARS · AGE WELL · LIVE STRONG</text></svg>"""
-    Path(path).write_text(svg, encoding="utf-8")
-
-
-def topic_visual(title, filename):
-    category = image_category(title)
-    asset_dir = Path(CONTENT_DIR) / "assets"
-    asset_dir.mkdir(parents=True, exist_ok=True)
-    safe = re.sub(r"[^a-z0-9-]+", "-", filename.lower()).strip("-")
-    image_path = asset_dir / f"{safe}.jpg"
-
-    if not image_path.exists():
-        try:
-            response = requests.get(IMAGE_SOURCES[category], timeout=30)
-            response.raise_for_status()
-            if len(response.content) < 10000:
-                raise ValueError("image response was unexpectedly small")
-            image_path.write_bytes(response.content)
-            print("Downloaded related image:", category, image_path)
-        except Exception as e:
-            print("Image download failed; using local SVG fallback:", e)
-            fallback = asset_dir / f"{safe}.svg"
-            _fallback_svg(category, fallback)
-            return "assets/" + fallback.name
-
-    return "assets/" + image_path.name
 
 # =========================================================
 # BUYER-INTENT TOPICS
@@ -115,6 +51,7 @@ TOPICS = [
     "Healthy aging habits that support strength, energy and mobility",
 ]
 
+
 # =========================================================
 # AI REQUEST
 # =========================================================
@@ -126,7 +63,7 @@ def ask_ai(prompt):
     headers = {
         "Authorization": f"Bearer {API_KEY}",
         "Content-Type": "application/json",
-        "HTTP-Referer": "https://rasghsims.github.io/affiliate-agent/",
+        "HTTP-Referer": SITE_URL + "/",
         "X-Title": SITE_NAME,
     }
 
@@ -137,14 +74,14 @@ def ask_ai(prompt):
                 "role": "system",
                 "content": (
                     "You are an expert wellness content writer. "
-                    "Create useful, original and readable educational content "
-                    "for adults interested in healthy aging, strength, mobility, "
-                    "nutrition, recovery and vitality. "
+                    "Create useful, original, readable educational content "
+                    "for adults interested in healthy aging, strength, "
+                    "mobility, nutrition, recovery and vitality. "
                     "Never invent studies, statistics, doctors, testimonials, "
                     "reviews or guarantees. "
                     "Do not make disease treatment or cure claims. "
-                    "Do not use fear-based marketing or fake urgency. "
-                    "Do not use miracle or guaranteed-result language."
+                    "Do not use fear-based marketing, fake urgency, "
+                    "miracle language or guaranteed-result language."
                 ),
             },
             {
@@ -228,28 +165,18 @@ def get_existing_titles():
 
     titles = []
 
-    if not os.path.exists(CONTENT_DIR):
+    content_path = Path(CONTENT_DIR)
+
+    if not content_path.exists():
         return titles
 
-    for filename in os.listdir(CONTENT_DIR):
-
-        if not filename.endswith(".html"):
-            continue
-
-        path = os.path.join(
-            CONTENT_DIR,
-            filename,
-        )
+    for path in content_path.glob("*.html"):
 
         try:
 
-            with open(
-                path,
-                "r",
-                encoding="utf-8",
-            ) as f:
-
-                content = f.read()
+            content = path.read_text(
+                encoding="utf-8"
+            )
 
             match = re.search(
                 r"<title>(.*?)</title>",
@@ -265,9 +192,14 @@ def get_existing_titles():
                     match.group(1),
                 ).strip()
 
-                titles.append(
-                    title.lower()
+                title = re.sub(
+                    r"\s+\|\s+StrongerYears$",
+                    "",
+                    title,
+                    flags=re.I,
                 )
+
+                titles.append(title.lower())
 
         except Exception:
             pass
@@ -276,7 +208,7 @@ def get_existing_titles():
 
 
 # =========================================================
-# ARTICLE GENERATOR
+# ARTICLE GENERATION
 # =========================================================
 
 def generate_article(topic, existing_titles):
@@ -287,39 +219,40 @@ Create a high-quality original article about:
 "{topic}"
 
 Audience:
-Adults 50+ in the United States who are interested in
-strength, mobility, recovery, nutrition and healthy aging.
+Adults 50+ in the United States interested in strength,
+mobility, recovery, nutrition and healthy aging.
 
 Requirements:
 
 - 1200–1600 words.
-- Give it a strong, natural title.
+- Create a strong natural title.
 - Start with an engaging introduction.
 - Use H2 and H3 sections.
 - Use short readable paragraphs.
-- Include practical advice.
+- Give practical advice.
 - Include a simple checklist.
 - Explain why maintaining muscle and an active lifestyle matters.
 - Explain how nutrition can support an active lifestyle.
 - Explain the role amino acids can play in nutrition without exaggeration.
-- Mention that supplements are optional and not a replacement for a balanced diet.
-- Do not claim any supplement treats, cures, prevents or reverses disease.
+- Mention that supplements are optional and are not a replacement
+  for a balanced diet.
+- Do not claim supplements treat, cure, prevent or reverse disease.
 - Do not invent studies, statistics or medical authorities.
-- Do not create fake testimonials.
-- Do not create fake reviews.
+- Do not create testimonials or reviews.
 - Do not promise specific results.
 - Do not use fake scarcity or urgency.
-- Do not use words like miracle, guaranteed, secret cure or instant results.
+- Do not use miracle, guaranteed, secret cure or instant-result language.
 - End with a natural optional recommendation for readers who want
   to explore amino-acid nutrition further.
 
+Existing article titles:
+
+{existing_titles[:40]}
+
+Create a substantially different title.
+
+Return only the article in Markdown.
 Do not mention these instructions.
-
-Existing titles:
-
-{existing_titles[:30]}
-
-Create a substantially different title from existing articles.
 """
 
     raw = clean_text(
@@ -337,11 +270,17 @@ Create a substantially different title from existing articles.
             "",
             line,
         ).strip()
-        cleaned = re.sub(r"\*+", "", cleaned).strip()
+
+        cleaned = re.sub(
+            r"\*+",
+            "",
+            cleaned,
+        ).strip()
 
         if cleaned:
 
             title = cleaned
+
             break
 
     if not title:
@@ -357,8 +296,13 @@ Create a substantially different title from existing articles.
             body_lines[0],
         ).strip()
 
-        if first.lower() == title.lower():
+        first = re.sub(
+            r"\*+",
+            "",
+            first,
+        ).strip()
 
+        if first.lower() == title.lower():
             body_lines = body_lines[1:]
 
     body = "\n".join(
@@ -387,20 +331,23 @@ def markdown_to_html(text):
 
     def inline_format(value):
 
-        # Escape first, then safely restore only the Markdown emphasis
-        # that the AI is allowed to generate. This prevents literal **
-        # markers from appearing on the live site.
         value = html.escape(value)
+
         value = re.sub(
             r"\*\*(.+?)\*\*",
             r"<strong>\1</strong>",
             value,
         )
+
         value = re.sub(
             r"(?<!\*)\*([^*\n]+?)\*(?!\*)",
             r"<em>\1</em>",
             value,
         )
+
+        # Final safety cleanup.
+        value = value.replace("**", "")
+
         return value
 
     def flush_paragraph():
@@ -510,26 +457,229 @@ def markdown_to_html(text):
 
         close_list()
 
-        paragraph.append(
-            stripped
-        )
+        paragraph.append(stripped)
 
     flush_paragraph()
+
     close_list()
 
     return "\n".join(output)
 
 
 # =========================================================
+# LOCAL TOPIC VISUAL
+# =========================================================
+
+def topic_visual(title, slug):
+
+    ASSET_DIR.mkdir(
+        parents=True,
+        exist_ok=True,
+    )
+
+    path = ASSET_DIR / f"{slug}.svg"
+
+    lower = title.lower()
+
+    if any(
+        word in lower
+        for word in [
+            "recovery",
+            "recover",
+            "morning",
+            "routine",
+        ]
+    ):
+
+        accent = "#b7f36b"
+        secondary = "#8ebc9c"
+        label = "RECOVER • REBUILD"
+
+    elif any(
+        word in lower
+        for word in [
+            "nutrition",
+            "protein",
+            "amino",
+            "food",
+            "diet",
+        ]
+    ):
+
+        accent = "#d9efb7"
+        secondary = "#6f9d7d"
+        label = "NOURISH • SUPPORT"
+
+    elif any(
+        word in lower
+        for word in [
+            "mobility",
+            "active",
+            "exercise",
+            "movement",
+            "resistance",
+        ]
+    ):
+
+        accent = "#c7f59b"
+        secondary = "#527b67"
+        label = "MOVE • STAY ACTIVE"
+
+    else:
+
+        accent = "#b7f36b"
+        secondary = "#72957f"
+        label = "STRENGTH • VITALITY"
+
+    safe_label = html.escape(
+        label
+    )
+
+    safe_title = html.escape(
+        title[:42]
+    )
+
+    svg = f"""<svg xmlns="http://www.w3.org/2000/svg"
+viewBox="0 0 1200 720"
+role="img"
+aria-label="{safe_title}">
+<defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0%" stop-color="#081512"/>
+        <stop offset="55%" stop-color="#19382c"/>
+        <stop offset="100%" stop-color="#304f40"/>
+    </linearGradient>
+
+    <radialGradient id="glow">
+        <stop offset="0%" stop-color="{accent}" stop-opacity=".42"/>
+        <stop offset="100%" stop-color="{accent}" stop-opacity="0"/>
+    </radialGradient>
+</defs>
+
+<rect width="1200" height="720" fill="url(#bg)"/>
+
+<circle
+    cx="930"
+    cy="180"
+    r="270"
+    fill="url(#glow)"
+/>
+
+<circle
+    cx="1010"
+    cy="580"
+    r="210"
+    fill="{secondary}"
+    opacity=".14"
+/>
+
+<path
+    d="M0 590 C220 470 370 680 590 530
+       C760 415 870 485 1200 330
+       L1200 720 L0 720 Z"
+    fill="#07110e"
+    opacity=".48"
+/>
+
+<circle
+    cx="860"
+    cy="285"
+    r="82"
+    fill="{accent}"
+    opacity=".92"
+/>
+
+<path
+    d="M760 425
+       C790 345 935 345 965 425
+       L1010 575
+       L715 575 Z"
+    fill="{accent}"
+    opacity=".88"
+/>
+
+<rect
+    x="640"
+    y="555"
+    width="420"
+    height="18"
+    rx="9"
+    fill="{accent}"
+    opacity=".75"
+/>
+
+<rect
+    x="590"
+    y="525"
+    width="55"
+    height="78"
+    rx="12"
+    fill="{secondary}"
+/>
+
+<rect
+    x="1055"
+    y="525"
+    width="55"
+    height="78"
+    rx="12"
+    fill="{secondary}"
+/>
+
+<text
+    x="70"
+    y="100"
+    fill="{accent}"
+    font-family="Arial, Helvetica, sans-serif"
+    font-size="22"
+    font-weight="800"
+    letter-spacing="6">
+    {safe_label}
+</text>
+
+<text
+    x="70"
+    y="635"
+    fill="white"
+    font-family="Arial, Helvetica, sans-serif"
+    font-size="30"
+    font-weight="700">
+    STRONGER YEARS
+</text>
+</svg>
+"""
+
+    path.write_text(
+        svg,
+        encoding="utf-8",
+    )
+
+    return path.as_posix()
+
+
+# =========================================================
 # ARTICLE PAGE
 # =========================================================
 
-def article_html(title, body_html, visual_path):
+def article_html(
+    title,
+    body_html,
+    visual_path,
+):
 
-    safe_title = html.escape(title)
+    safe_title = html.escape(
+        title
+    )
+
+    safe_visual = html.escape(
+        "../" + visual_path
+    )
+
+    description = html.escape(
+        f"{title} — practical guidance for strength, mobility, nutrition, recovery and healthy aging."
+    )
 
     return f"""<!DOCTYPE html>
-
 <html lang="en">
 
 <head>
@@ -541,8 +691,20 @@ content="width=device-width, initial-scale=1.0">
 
 <title>{safe_title} | {SITE_NAME}</title>
 
-<meta name="description"
-content="{safe_title} — practical guidance for strength, mobility and healthy aging.">
+<meta
+name="description"
+content="{description}"
+>
+
+<meta
+name="robots"
+content="index,follow"
+>
+
+<link
+rel="canonical"
+href="{SITE_URL}/content/{slugify(title)}"
+>
 
 <style>
 
@@ -558,10 +720,7 @@ body {{
     margin: 0;
     background: #f4f3ed;
     color: #13211d;
-    font-family:
-        Arial,
-        Helvetica,
-        sans-serif;
+    font-family: Arial, Helvetica, sans-serif;
     line-height: 1.75;
 }}
 
@@ -591,26 +750,21 @@ nav {{
 }}
 
 .hero {{
+    min-height: 570px;
     position: relative;
-    min-height: 550px;
+    overflow: hidden;
     display: flex;
     align-items: end;
-    overflow: hidden;
     color: white;
-    background:
-        radial-gradient(circle at 78% 28%, rgba(183,243,107,.22), transparent 22%),
-        linear-gradient(135deg, #07110f 0%, #17382c 52%, #10201b 100%);
+    background: #10201b;
 }}
 
-.hero-bg {{
+.hero img {{
     position: absolute;
     inset: 0;
     width: 100%;
     height: 100%;
-    background:
-        radial-gradient(circle at 72% 35%, rgba(183,243,107,.18), transparent 20%),
-        linear-gradient(125deg, transparent 30%, rgba(255,255,255,.035) 30.2%, transparent 30.5%),
-        linear-gradient(145deg, #07110f 0%, #17382c 55%, #10201b 100%);
+    object-fit: cover;
 }}
 
 .hero-overlay {{
@@ -619,23 +773,24 @@ nav {{
     background:
         linear-gradient(
             90deg,
-            rgba(5,18,14,.88),
-            rgba(5,18,14,.2)
+            rgba(4,16,12,.93),
+            rgba(4,16,12,.38),
+            rgba(4,16,12,.12)
         ),
         linear-gradient(
             0deg,
-            rgba(5,18,14,.65),
-            transparent
+            rgba(4,16,12,.75),
+            transparent 60%
         );
 }}
 
 .hero-content {{
     position: relative;
     z-index: 2;
-    max-width: 1100px;
     width: 100%;
+    max-width: 1200px;
     margin: auto;
-    padding: 90px 7%;
+    padding: 110px 7%;
 }}
 
 .eyebrow {{
@@ -647,8 +802,8 @@ nav {{
 }}
 
 h1 {{
-    max-width: 900px;
-    font-size: clamp(45px, 7vw, 85px);
+    max-width: 950px;
+    font-size: clamp(46px, 7vw, 88px);
     line-height: .95;
     letter-spacing: -4px;
     margin: 18px 0;
@@ -657,7 +812,7 @@ h1 {{
 .article {{
     max-width: 820px;
     margin: auto;
-    padding: 80px 7% 100px;
+    padding: 80px 7% 110px;
 }}
 
 .article p {{
@@ -722,6 +877,29 @@ footer {{
     font-size: 12px;
 }}
 
+@media (max-width: 600px) {{
+
+    h1 {{
+        letter-spacing: -2px;
+    }}
+
+    .hero {{
+        min-height: 520px;
+    }}
+
+    .article {{
+        padding-top: 55px;
+    }}
+
+    .article p {{
+        font-size: 17px;
+    }}
+
+    .cta {{
+        padding: 30px;
+    }}
+}}
+
 </style>
 
 </head>
@@ -730,36 +908,39 @@ footer {{
 
 <nav>
 
-    <div class="logo">
-        Stronger<span>Years</span>
-    </div>
+<div class="logo">
+    Stronger<span>Years</span>
+</div>
 
-    <a
-        class="nav-link"
-        href="../index.html"
-    >
-        Home
-    </a>
+<a
+class="nav-link"
+href="../index.html">
+    Home
+</a>
 
 </nav>
 
 <header class="hero">
 
-    <div class="hero-bg" style="background-image:url('{visual_path}');" aria-hidden="true"></div>
+<img
+src="{safe_visual}"
+alt="{safe_title}"
+loading="eager"
+>
 
-    <div class="hero-overlay"></div>
+<div class="hero-overlay"></div>
 
-    <div class="hero-content">
+<div class="hero-content">
 
-        <div class="eyebrow">
-            Strength · Vitality · Healthy aging
-        </div>
+<div class="eyebrow">
+    Strength · Vitality · Healthy aging
+</div>
 
-        <h1>
-            {safe_title}
-        </h1>
+<h1>
+    {safe_title}
+</h1>
 
-    </div>
+</div>
 
 </header>
 
@@ -769,28 +950,27 @@ footer {{
 
 <section class="cta">
 
-    <h2>
-        Want to explore the nutrition side?
-    </h2>
+<h2>
+    Want to explore the nutrition side?
+</h2>
 
-    <p>
-        Amino acids are one part of the broader nutrition
-        conversation around maintaining muscle and supporting
-        an active lifestyle.
-    </p>
+<p>
+    Amino acids are one part of the broader nutrition
+    conversation around maintaining muscle and supporting
+    an active lifestyle.
+</p>
 
-    <a
-        class="button"
-        href="{AFFILIATE_LINK}"
-        target="_blank"
-        rel="nofollow sponsored"
-    >
-        Explore the Formula →
-    </a>
+<a
+class="button"
+href="{AFFILIATE_LINK}"
+target="_blank"
+rel="nofollow sponsored">
+    Explore the Formula →
+</a>
 
-    <div class="disclosure">
-        {DISCLOSURE}
-    </div>
+<div class="disclosure">
+    {DISCLOSURE}
+</div>
 
 </section>
 
@@ -801,40 +981,29 @@ footer {{
 </footer>
 
 </body>
-
 </html>
 """
 
 
 # =========================================================
-# PREMIUM HOMEPAGE
+# HOMEPAGE
 # =========================================================
 
 def build_homepage():
 
     articles = []
 
-    if os.path.exists(CONTENT_DIR):
+    content_path = Path(CONTENT_DIR)
 
-        for filename in os.listdir(CONTENT_DIR):
+    if content_path.exists():
 
-            if not filename.endswith(".html"):
-                continue
-
-            path = os.path.join(
-                CONTENT_DIR,
-                filename,
-            )
+        for path in content_path.glob("*.html"):
 
             try:
 
-                with open(
-                    path,
-                    "r",
-                    encoding="utf-8",
-                ) as f:
-
-                    content = f.read()
+                content = path.read_text(
+                    encoding="utf-8"
+                )
 
                 match = re.search(
                     r"<title>(.*?)</title>",
@@ -850,8 +1019,18 @@ def build_homepage():
                         match.group(1),
                     ).strip()
 
+                    title = re.sub(
+                        r"\s+\|\s+StrongerYears$",
+                        "",
+                        title,
+                        flags=re.I,
+                    )
+
                     articles.append(
-                        (title, filename)
+                        (
+                            title,
+                            path.name,
+                        )
                     )
 
             except Exception:
@@ -861,63 +1040,90 @@ def build_homepage():
         articles,
         key=lambda x: x[1],
         reverse=True,
-    )[:8]
+    )[:12]
 
     cards = []
 
-    for i, (title, filename) in enumerate(
+    for index, (title, filename) in enumerate(
         articles
     ):
 
-        image = topic_visual(title, slugify(title))
+        safe_title = html.escape(
+            title
+        )
+
+        visual_name = slugify(
+            title
+        ) + ".svg"
+
+        visual = (
+            "content/assets/"
+            + visual_name
+        )
+
+        # If visual doesn't exist, create a basic local visual.
+        visual_file = Path(
+            CONTENT_DIR
+        ) / "assets" / visual_name
+
+        if not visual_file.exists():
+
+            topic_visual(
+                title,
+                slugify(title),
+            )
 
         cards.append(
             f"""
-            <a
-                class="guide-card reveal"
-                href="content/{html.escape(filename)}"
-            >
+<a
+class="guide-card"
+href="content/{html.escape(filename)}">
 
-                <div class="card-image">
+<div class="card-image">
 
-                    <div class="card-art" style="background-image:url('content/{image}');" aria-hidden="true"></div>
+<img
+src="{html.escape(visual)}"
+alt="{safe_title}"
+loading="lazy"
+>
 
-                    <div class="card-gradient"></div>
+<div class="card-tag">
+    GUIDE
+</div>
 
-                    <span class="card-tag">
-                        GUIDE
-                    </span>
+</div>
 
-                </div>
+<div class="card-content">
 
-                <div class="card-content">
+<h3>
+    {safe_title}
+</h3>
 
-                    <h3>
-                        {html.escape(title)}
-                    </h3>
+<span class="read-link">
+    Read guide <b>→</b>
+</span>
 
-                    <span class="read-link">
-                        Read guide <b>→</b>
-                    </span>
+</div>
 
-                </div>
-
-            </a>
-            """
+</a>
+"""
         )
 
-    cards_html = "\n".join(cards)
+    cards_html = "\n".join(
+        cards
+    )
 
     return f"""<!DOCTYPE html>
-
 <html lang="en">
 
 <head>
 
 <meta charset="UTF-8">
 
-<meta name="viewport"
-content="width=device-width, initial-scale=1.0">
+<meta
+name="viewport"
+content="width=device-width, initial-scale=1.0"
+>
 
 <title>
 {SITE_NAME} — Age well. Live strong.
@@ -926,6 +1132,16 @@ content="width=device-width, initial-scale=1.0">
 <meta
 name="description"
 content="Practical guides for strength, mobility, recovery, nutrition and healthy aging."
+>
+
+<meta
+name="robots"
+content="index,follow"
+>
+
+<link
+rel="canonical"
+href="{SITE_URL}/"
 >
 
 <style>
@@ -951,10 +1167,7 @@ body {{
     margin: 0;
     background: var(--cream);
     color: var(--ink);
-    font-family:
-        Arial,
-        Helvetica,
-        sans-serif;
+    font-family: Arial, Helvetica, sans-serif;
     overflow-x: hidden;
 }}
 
@@ -995,11 +1208,6 @@ a {{
     text-decoration: none;
     font-size: 13px;
     opacity: .88;
-    transition: opacity .2s ease;
-}}
-
-.nav-links a:hover {{
-    opacity: 1;
 }}
 
 .hero {{
@@ -1010,18 +1218,70 @@ a {{
     overflow: hidden;
     color: white;
     background:
-        radial-gradient(circle at 78% 28%, rgba(183,243,107,.22), transparent 24%),
-        radial-gradient(circle at 58% 72%, rgba(65,120,94,.30), transparent 32%),
-        linear-gradient(135deg, #0b1715 0%, #17332a 48%, #10201b 100%);
+        radial-gradient(
+            circle at 78% 28%,
+            rgba(183,243,107,.22),
+            transparent 24%
+        ),
+        linear-gradient(
+            135deg,
+            #0b1715 0%,
+            #17332a 48%,
+            #10201b 100%
+        );
 }}
 
-.hero-image {{
+.hero-visual {{
     position: absolute;
     inset: 0;
     background:
-        radial-gradient(circle at 72% 35%, rgba(183,243,107,.20), transparent 22%),
-        linear-gradient(125deg, transparent 25%, rgba(255,255,255,.035) 25.2%, transparent 25.5%),
-        linear-gradient(145deg, #07110f 0%, #17382c 52%, #10201b 100%);
+        radial-gradient(
+            circle at 78% 25%,
+            rgba(183,243,107,.28),
+            transparent 20%
+        ),
+        radial-gradient(
+            circle at 65% 75%,
+            rgba(117,160,133,.35),
+            transparent 28%
+        ),
+        linear-gradient(
+            135deg,
+            #07110f,
+            #17382c 55%,
+            #10201b
+        );
+}}
+
+.hero-visual::before {{
+    content: "";
+    position: absolute;
+    width: 460px;
+    height: 460px;
+    right: 7%;
+    top: 20%;
+    border-radius: 50%;
+    border: 1px solid rgba(183,243,107,.35);
+    box-shadow:
+        0 0 0 40px rgba(183,243,107,.025),
+        0 0 0 100px rgba(183,243,107,.018);
+}}
+
+.hero-visual::after {{
+    content: "";
+    position: absolute;
+    right: 13%;
+    bottom: 15%;
+    width: 300px;
+    height: 300px;
+    border-radius: 48% 52% 55% 45%;
+    background:
+        linear-gradient(
+            145deg,
+            rgba(183,243,107,.30),
+            rgba(80,120,95,.08)
+        );
+    transform: rotate(-20deg);
 }}
 
 .hero-overlay {{
@@ -1030,9 +1290,9 @@ a {{
     background:
         linear-gradient(
             90deg,
-            rgba(5,18,14,.9) 0%,
-            rgba(5,18,14,.63) 42%,
-            rgba(5,18,14,.1) 78%
+            rgba(5,18,14,.92) 0%,
+            rgba(5,18,14,.68) 43%,
+            rgba(5,18,14,.12) 82%
         ),
         linear-gradient(
             0deg,
@@ -1096,7 +1356,8 @@ a {{
 
 .hero-button:hover {{
     transform: translateY(-4px);
-    box-shadow: 0 15px 35px rgba(183,243,107,.2);
+    box-shadow:
+        0 15px 35px rgba(183,243,107,.2);
 }}
 
 .hero-button b {{
@@ -1109,7 +1370,6 @@ a {{
     letter-spacing: 3px;
     text-transform: uppercase;
     opacity: .6;
-    animation: float 2s ease-in-out infinite;
 }}
 
 .section {{
@@ -1142,37 +1402,73 @@ a {{
     color: var(--muted);
 }}
 
-.story-image {{
-    width: 100%;
-    height: 430px;
-    border-radius: 30px;
-    box-shadow: 0 25px 70px rgba(0,0,0,.15);
-    background:
-        radial-gradient(circle at 70% 25%, rgba(183,243,107,.55), transparent 18%),
-        linear-gradient(145deg, #dfe8dd, #a9c1ad 48%, #29483c);
+.story-visual {{
+    min-height: 470px;
+    border-radius: 34px;
+    overflow: hidden;
+    position: relative;
     display: flex;
-    flex-direction: column;
-    justify-content: flex-end;
+    align-items: end;
     padding: 42px;
-    color: #10201b;
+    color: white;
+    background:
+        radial-gradient(
+            circle at 72% 22%,
+            rgba(183,243,107,.5),
+            transparent 18%
+        ),
+        linear-gradient(
+            145deg,
+            #dfe8dd,
+            #789984 50%,
+            #19382d
+        );
+    box-shadow:
+        0 30px 80px rgba(0,0,0,.15);
 }}
 
-.story-image span {{
+.story-visual::before {{
+    content: "";
+    position: absolute;
+    width: 250px;
+    height: 250px;
+    border-radius: 50%;
+    right: 70px;
+    top: 70px;
+    border: 1px solid rgba(255,255,255,.6);
+}}
+
+.story-visual::after {{
+    content: "";
+    position: absolute;
+    width: 130px;
+    height: 260px;
+    border-radius: 70px;
+    right: 130px;
+    top: 140px;
+    background: rgba(183,243,107,.72);
+    transform: rotate(18deg);
+}}
+
+.story-text {{
+    position: relative;
+    z-index: 2;
+}}
+
+.story-text span {{
+    display: block;
     font-size: 11px;
     letter-spacing: 3px;
     font-weight: 800;
-    opacity: .65;
+    margin-bottom: 12px;
 }}
 
-.story-image b {{
-    margin-top: 8px;
-    font-size: clamp(28px, 4vw, 48px);
+.story-text b {{
+    display: block;
+    max-width: 430px;
+    font-size: clamp(32px, 4vw, 54px);
+    line-height: 1;
     letter-spacing: -2px;
-    max-width: 420px;
-}}
-
-.story-image:hover {{
-    transform: scale(1.015);
 }}
 
 .stat-row {{
@@ -1194,7 +1490,8 @@ a {{
 
 .stat:hover {{
     transform: translateY(-5px);
-    box-shadow: 0 15px 30px rgba(0,0,0,.08);
+    box-shadow:
+        0 15px 30px rgba(0,0,0,.08);
 }}
 
 .stat-icon {{
@@ -1217,10 +1514,6 @@ a {{
     justify-content: space-between;
     align-items: end;
     gap: 30px;
-}}
-
-.guides-heading .big-heading {{
-    margin-bottom: 0;
 }}
 
 .guide-intro {{
@@ -1251,7 +1544,8 @@ a {{
 .guide-card:hover {{
     transform: translateY(-9px);
     border-color: rgba(183,243,107,.55);
-    box-shadow: 0 25px 55px rgba(0,0,0,.25);
+    box-shadow:
+        0 25px 55px rgba(0,0,0,.25);
 }}
 
 .card-image {{
@@ -1260,32 +1554,15 @@ a {{
     overflow: hidden;
 }}
 
-.card-art {{
+.card-image img {{
     width: 100%;
     height: 100%;
-    background:
-        radial-gradient(circle at 75% 25%, rgba(183,243,107,.32), transparent 20%),
-        linear-gradient(145deg, #29483c, #10201b 65%);
+    object-fit: cover;
     transition: transform .6s ease;
 }}
 
-.guide-card:nth-child(2) .card-art {{ background: linear-gradient(145deg, #30483d, #17231f); }}
-.guide-card:nth-child(3) .card-art {{ background: linear-gradient(145deg, #566a54, #17231f); }}
-.guide-card:nth-child(4) .card-art {{ background: linear-gradient(145deg, #3c5548, #0e1916); }}
-
-.guide-card:hover .card-art {{
-    transform: scale(1.03);
-}}
-
-.card-gradient {{
-    position: absolute;
-    inset: 0;
-    background:
-        linear-gradient(
-            0deg,
-            rgba(0,0,0,.55),
-            transparent 60%
-        );
+.guide-card:hover .card-image img {{
+    transform: scale(1.05);
 }}
 
 .card-tag {{
@@ -1324,32 +1601,42 @@ a {{
 
 .cta-section {{
     position: relative;
-    min-height: 620px;
+    min-height: 600px;
     overflow: hidden;
     display: flex;
     align-items: center;
-}}
-
-.cta-image {{
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
     background:
-        radial-gradient(circle at 82% 38%, rgba(183,243,107,.28), transparent 22%),
-        linear-gradient(125deg, #dfe8dd 0%, #b9cdbd 48%, #5d7565 100%);
-}}
-
-.cta-overlay {{
-    position: absolute;
-    inset: 0;
-    background:
+        radial-gradient(
+            circle at 80% 35%,
+            rgba(183,243,107,.3),
+            transparent 24%
+        ),
         linear-gradient(
-            90deg,
-            rgba(244,243,237,.98) 0%,
-            rgba(244,243,237,.82) 43%,
-            rgba(244,243,237,.08) 100%
+            135deg,
+            #dfe8dd,
+            #9eb6a3
         );
+}}
+
+.cta-visual {{
+    position: absolute;
+    right: 5%;
+    width: 470px;
+    height: 470px;
+    border-radius: 50%;
+    border: 1px solid rgba(16,32,27,.25);
+}}
+
+.cta-visual::before {{
+    content: "";
+    position: absolute;
+    width: 300px;
+    height: 300px;
+    left: 85px;
+    top: 85px;
+    border-radius: 48%;
+    background: rgba(16,32,27,.10);
+    transform: rotate(25deg);
 }}
 
 .cta-content {{
@@ -1424,50 +1711,6 @@ footer {{
     line-height: 1.6;
 }}
 
-.reveal {{
-    opacity: 0;
-    transform: translateY(25px);
-    animation: reveal .8s ease forwards;
-}}
-
-.guide-card:nth-child(2) {{
-    animation-delay: .08s;
-}}
-
-.guide-card:nth-child(3) {{
-    animation-delay: .16s;
-}}
-
-.guide-card:nth-child(4) {{
-    animation-delay: .24s;
-}}
-
-@keyframes reveal {{
-
-    to {{
-        opacity: 1;
-        transform: translateY(0);
-    }}
-
-}}
-
-@keyframes heroZoom {{
-    from {{ opacity: .92; }}
-    to {{ opacity: 1; }}
-}}
-
-@keyframes float {{
-
-    0%,100% {{
-        transform: translateY(0);
-    }}
-
-    50% {{
-        transform: translateY(7px);
-    }}
-
-}}
-
 @media (max-width: 950px) {{
 
     .nav-links {{
@@ -1479,10 +1722,6 @@ footer {{
         gap: 50px;
     }}
 
-    .story-image {{
-        height: 330px;
-    }}
-
     .guide-grid {{
         grid-template-columns: repeat(2,1fr);
     }}
@@ -1491,6 +1730,9 @@ footer {{
         grid-template-columns: repeat(2,1fr);
     }}
 
+    .cta-visual {{
+        opacity: .4;
+    }}
 }}
 
 @media (max-width: 600px) {{
@@ -1519,8 +1761,8 @@ footer {{
         grid-template-columns: 1fr 1fr;
     }}
 
-    .cta-section {{
-        min-height: 560px;
+    .story-visual {{
+        min-height: 360px;
     }}
 
     .footer-inner {{
@@ -1537,244 +1779,246 @@ footer {{
 
 <nav class="nav">
 
-    <div class="logo">
-        Stronger<span>Years</span>
-    </div>
+<div class="logo">
+    Stronger<span>Years</span>
+</div>
 
-    <div class="nav-links">
+<div class="nav-links">
 
-        <a href="#guides">
-            Guides
-        </a>
+<a href="#guides">
+    Guides
+</a>
 
-        <a href="#approach">
-            Approach
-        </a>
+<a href="#approach">
+    Approach
+</a>
 
-        <a href="#start">
-            Start
-        </a>
+<a href="#start">
+    Start
+</a>
 
-    </div>
+</div>
 
 </nav>
 
 <header class="hero">
 
-    <div class="hero-image" aria-hidden="true"></div>
+<div class="hero-visual"
+aria-hidden="true"></div>
 
-    <div class="hero-overlay"></div>
+<div class="hero-overlay"></div>
 
-    <div class="hero-content">
+<div class="hero-content">
 
-        <div class="eyebrow">
-            Healthy aging · Strength · Vitality
-        </div>
+<div class="eyebrow">
+    Healthy aging · Strength · Vitality
+</div>
 
-        <h1>
-            Age well.<br>
-            <span>Live strong.</span>
-        </h1>
+<h1>
+    Age well.<br>
+    <span>Live strong.</span>
+</h1>
 
-        <p class="hero-copy">
-            Practical guides, simple habits and thoughtful ideas
-            for maintaining strength, mobility and everyday vitality
-            as you get older.
-        </p>
+<p class="hero-copy">
+    Practical guides, simple habits and thoughtful ideas
+    for maintaining strength, mobility and everyday vitality
+    as you get older.
+</p>
 
-        <a
-            class="hero-button"
-            href="#guides"
-        >
-            Explore the guides
-            <b>→</b>
-        </a>
+<a
+class="hero-button"
+href="#guides">
 
-        <div class="scroll">
-            Scroll to explore ↓
-        </div>
+    Explore the guides
+    <b>→</b>
 
-    </div>
+</a>
+
+<div class="scroll">
+    Scroll to explore ↓
+</div>
+
+</div>
 
 </header>
 
+
 <section
-    class="section"
-    id="approach"
->
+class="section"
+id="approach">
 
-    <div class="section-inner split">
+<div class="section-inner split">
 
-        <div>
+<div>
 
-            <div class="eyebrow">
-                The bigger picture
-            </div>
+<div class="eyebrow">
+    The bigger picture
+</div>
 
-            <h2 class="big-heading">
-                Your best years aren't behind you.
-            </h2>
+<h2 class="big-heading">
+    Your best years aren't behind you.
+</h2>
 
-            <p class="body-copy">
-                Healthy aging is about staying engaged with the
-                things you enjoy. Movement, nutrition, recovery
-                and consistent habits can all play a role in
-                supporting an active lifestyle.
-            </p>
+<p class="body-copy">
+    Healthy aging is about staying engaged with the
+    things you enjoy. Movement, nutrition, recovery
+    and consistent habits can all play a role in
+    supporting an active lifestyle.
+</p>
 
-            <div class="stat-row">
+<div class="stat-row">
 
-                <div class="stat">
-                    <div class="stat-icon">
-                        🏋️
-                    </div>
-                    <strong>
-                        Strength
-                    </strong>
-                </div>
+<div class="stat">
+    <div class="stat-icon">🏋️</div>
+    <strong>Strength</strong>
+</div>
 
-                <div class="stat">
-                    <div class="stat-icon">
-                        🧘
-                    </div>
-                    <strong>
-                        Mobility
-                    </strong>
-                </div>
+<div class="stat">
+    <div class="stat-icon">🧘</div>
+    <strong>Mobility</strong>
+</div>
 
-                <div class="stat">
-                    <div class="stat-icon">
-                        🥗
-                    </div>
-                    <strong>
-                        Nutrition
-                    </strong>
-                </div>
+<div class="stat">
+    <div class="stat-icon">🥗</div>
+    <strong>Nutrition</strong>
+</div>
 
-                <div class="stat">
-                    <div class="stat-icon">
-                        ⚡
-                    </div>
-                    <strong>
-                        Vitality
-                    </strong>
-                </div>
+<div class="stat">
+    <div class="stat-icon">⚡</div>
+    <strong>Vitality</strong>
+</div>
 
-            </div>
+</div>
 
-        </div>
+</div>
 
-        <div class="story-image" aria-hidden="true">
-            <span>STRONGER YEARS</span>
-            <b>Move. Nourish. Recover.</b>
-        </div>
+<div
+class="story-visual"
+aria-hidden="true">
 
-    </div>
+<div class="story-text">
+
+<span>
+    STRONGER YEARS
+</span>
+
+<b>
+    Move.<br>
+    Nourish.<br>
+    Recover.
+</b>
+
+</div>
+
+</div>
+
+</div>
 
 </section>
 
+
 <section
-    class="section guides"
-    id="guides"
->
+class="section guides"
+id="guides">
 
-    <div class="section-inner">
+<div class="section-inner">
 
-        <div class="guides-heading">
+<div class="guides-heading">
 
-            <div>
+<div>
 
-                <div class="eyebrow">
-                    Latest guides
-                </div>
+<div class="eyebrow">
+    Latest guides
+</div>
 
-                <h2 class="big-heading">
-                    Ideas worth reading.
-                </h2>
+<h2 class="big-heading">
+    Ideas worth reading.
+</h2>
 
-            </div>
+</div>
 
-            <p class="guide-intro">
-                Practical articles about strength, nutrition,
-                recovery, mobility and healthy aging.
-            </p>
+<p class="guide-intro">
+    Practical articles about strength, nutrition,
+    recovery, mobility and healthy aging.
+</p>
 
-        </div>
+</div>
 
-        <div class="guide-grid">
+<div class="guide-grid">
 
-            {cards_html}
+{cards_html}
 
-        </div>
+</div>
 
-    </div>
+</div>
 
 </section>
 
+
 <section
-    class="cta-section"
-    id="start"
->
+class="cta-section"
+id="start">
 
-    <div class="cta-image" aria-hidden="true"></div>
+<div
+class="cta-visual"
+aria-hidden="true">
+</div>
 
-    <div class="cta-overlay"></div>
+<div class="cta-content">
 
-    <div class="cta-content">
+<div class="eyebrow">
+    Start simple
+</div>
 
-        <div class="eyebrow">
-            Start simple
-        </div>
+<h2>
+    Better habits.<br>
+    Stronger days.
+</h2>
 
-        <h2>
-            Better habits.<br>
-            Stronger days.
-        </h2>
+<p>
+    Explore practical approaches to movement, nutrition,
+    recovery and healthy aging — one useful idea at a time.
+</p>
 
-        <p>
-            Explore practical approaches to movement, nutrition,
-            recovery and healthy aging — one useful idea at a time.
-        </p>
+<a
+class="outline-button"
+href="#guides">
+    Browse all guides →
+</a>
 
-        <a
-            class="outline-button"
-            href="#guides"
-        >
-            Browse all guides →
-        </a>
+<div class="disclosure">
+    {DISCLOSURE}
+</div>
 
-        <div class="disclosure">
-            {DISCLOSURE}
-        </div>
-
-    </div>
+</div>
 
 </section>
+
 
 <footer>
 
-    <div class="footer-inner">
+<div class="footer-inner">
 
-        <div>
+<div>
 
-            <div class="logo">
-                Stronger<span>Years</span>
-            </div>
+<div class="logo">
+    Stronger<span>Years</span>
+</div>
 
-        </div>
+</div>
 
-        <div class="footer-note">
+<div class="footer-note">
 
-            Independent educational content about healthy aging,
-            strength, mobility and everyday wellness.
+Independent educational content about healthy aging,
+strength, mobility and everyday wellness.
 
-            <br><br>
+<br><br>
 
-            {DISCLOSURE}
+{DISCLOSURE}
 
-        </div>
+</div>
 
-    </div>
+</div>
 
 </footer>
 
@@ -1785,14 +2029,86 @@ footer {{
 
 
 # =========================================================
+# SITEMAP
+# =========================================================
+
+def build_sitemap():
+
+    urls = [
+        SITE_URL + "/"
+    ]
+
+    content_path = Path(
+        CONTENT_DIR
+    )
+
+    if content_path.exists():
+
+        for path in content_path.glob("*.html"):
+
+            urls.append(
+                SITE_URL
+                + "/content/"
+                + path.name
+            )
+
+    today = datetime.now().strftime(
+        "%Y-%m-%d"
+    )
+
+    entries = []
+
+    for url in urls:
+
+        entries.append(
+            f"""
+<url>
+    <loc>{html.escape(url)}</loc>
+    <lastmod>{today}</lastmod>
+</url>
+"""
+        )
+
+    sitemap = f"""<?xml version="1.0" encoding="UTF-8"?>
+
+<urlset
+xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+
+{"".join(entries)}
+
+</urlset>
+"""
+
+    Path(
+        "sitemap.xml"
+    ).write_text(
+        sitemap,
+        encoding="utf-8",
+    )
+
+    print(
+        "Sitemap updated:",
+        len(urls),
+        "URLs"
+    )
+
+
+# =========================================================
 # MAIN AGENT
 # =========================================================
 
 def main():
 
-    os.makedirs(
-        CONTENT_DIR,
-        exist_ok=True
+    Path(
+        CONTENT_DIR
+    ).mkdir(
+        parents=True,
+        exist_ok=True,
+    )
+
+    ASSET_DIR.mkdir(
+        parents=True,
+        exist_ok=True,
     )
 
     existing_titles = get_existing_titles()
@@ -1810,7 +2126,13 @@ def main():
     title = None
     body = None
 
-    for offset in range(len(TOPICS)):
+    # -----------------------------------------------------
+    # Try topics until a genuinely new article is generated.
+    # -----------------------------------------------------
+
+    for offset in range(
+        len(TOPICS)
+    ):
 
         selected_topic = TOPICS[
             (topic_index + offset)
@@ -1845,6 +2167,10 @@ def main():
 
             break
 
+    # -----------------------------------------------------
+    # Save new article.
+    # -----------------------------------------------------
+
     if title:
 
         print(
@@ -1856,22 +2182,27 @@ def main():
             "%Y-%m-%d-%H%M%S"
         )
 
-        slug = slugify(title)
+        slug = slugify(
+            title
+        )
 
         filename = (
             f"{slug}-{timestamp}.html"
         )
 
-        path = os.path.join(
-            CONTENT_DIR,
-            filename,
+        path = (
+            Path(CONTENT_DIR)
+            / filename
         )
 
         body_html = markdown_to_html(
             body
         )
 
-        visual_path = topic_visual(title, slug)
+        visual_path = topic_visual(
+            title,
+            slug,
+        )
 
         page = article_html(
             title,
@@ -1879,17 +2210,19 @@ def main():
             visual_path,
         )
 
-        with open(
-            path,
-            "w",
+        path.write_text(
+            page,
             encoding="utf-8",
-        ) as f:
-
-            f.write(page)
+        )
 
         print(
             "Saved article:",
             path
+        )
+
+        print(
+            "Saved visual:",
+            visual_path
         )
 
     else:
@@ -1898,25 +2231,37 @@ def main():
             "No new article generated."
         )
 
-    # Always rebuild homepage
+    # -----------------------------------------------------
+    # Always rebuild homepage.
+    # -----------------------------------------------------
+
     homepage = build_homepage()
 
-    with open(
-        "index.html",
-        "w",
+    Path(
+        "index.html"
+    ).write_text(
+        homepage,
         encoding="utf-8",
-    ) as f:
-
-        f.write(homepage)
+    )
 
     print(
         "Homepage updated."
     )
 
+    # -----------------------------------------------------
+    # Always rebuild sitemap.
+    # -----------------------------------------------------
+
+    build_sitemap()
+
     print(
         "Agent finished successfully."
     )
 
+
+# =========================================================
+# RUN
+# =========================================================
 
 if __name__ == "__main__":
     main()
