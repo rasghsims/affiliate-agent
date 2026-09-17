@@ -1,13 +1,14 @@
 <!DOCTYPE html>
-
 <html lang="en">
 
 <head>
 
 <meta charset="UTF-8">
 
-<meta name="viewport"
-content="width=device-width, initial-scale=1.0">
+<meta
+name="viewport"
+content="width=device-width, initial-scale=1.0"
+>
 
 <title>
 StrongerYears — Age well. Live strong.
@@ -16,6 +17,16 @@ StrongerYears — Age well. Live strong.
 <meta
 name="description"
 content="Practical guides for strength, mobility, recovery, nutrition and healthy aging."
+>
+
+<meta
+name="robots"
+content="index,follow"
+>
+
+<link
+rel="canonical"
+href="https://rasghsims.github.io/affiliate-agent/"
 >
 
 <style>
@@ -41,10 +52,7 @@ body {
     margin: 0;
     background: var(--cream);
     color: var(--ink);
-    font-family:
-        Arial,
-        Helvetica,
-        sans-serif;
+    font-family: Arial, Helvetica, sans-serif;
     overflow-x: hidden;
 }
 
@@ -85,11 +93,6 @@ a {
     text-decoration: none;
     font-size: 13px;
     opacity: .88;
-    transition: opacity .2s ease;
-}
-
-.nav-links a:hover {
-    opacity: 1;
 }
 
 .hero {
@@ -100,18 +103,70 @@ a {
     overflow: hidden;
     color: white;
     background:
-        radial-gradient(circle at 78% 28%, rgba(183,243,107,.22), transparent 24%),
-        radial-gradient(circle at 58% 72%, rgba(65,120,94,.30), transparent 32%),
-        linear-gradient(135deg, #0b1715 0%, #17332a 48%, #10201b 100%);
+        radial-gradient(
+            circle at 78% 28%,
+            rgba(183,243,107,.22),
+            transparent 24%
+        ),
+        linear-gradient(
+            135deg,
+            #0b1715 0%,
+            #17332a 48%,
+            #10201b 100%
+        );
 }
 
-.hero-image {
+.hero-visual {
     position: absolute;
     inset: 0;
     background:
-        radial-gradient(circle at 72% 35%, rgba(183,243,107,.20), transparent 22%),
-        linear-gradient(125deg, transparent 25%, rgba(255,255,255,.035) 25.2%, transparent 25.5%),
-        linear-gradient(145deg, #07110f 0%, #17382c 52%, #10201b 100%);
+        radial-gradient(
+            circle at 78% 25%,
+            rgba(183,243,107,.28),
+            transparent 20%
+        ),
+        radial-gradient(
+            circle at 65% 75%,
+            rgba(117,160,133,.35),
+            transparent 28%
+        ),
+        linear-gradient(
+            135deg,
+            #07110f,
+            #17382c 55%,
+            #10201b
+        );
+}
+
+.hero-visual::before {
+    content: "";
+    position: absolute;
+    width: 460px;
+    height: 460px;
+    right: 7%;
+    top: 20%;
+    border-radius: 50%;
+    border: 1px solid rgba(183,243,107,.35);
+    box-shadow:
+        0 0 0 40px rgba(183,243,107,.025),
+        0 0 0 100px rgba(183,243,107,.018);
+}
+
+.hero-visual::after {
+    content: "";
+    position: absolute;
+    right: 13%;
+    bottom: 15%;
+    width: 300px;
+    height: 300px;
+    border-radius: 48% 52% 55% 45%;
+    background:
+        linear-gradient(
+            145deg,
+            rgba(183,243,107,.30),
+            rgba(80,120,95,.08)
+        );
+    transform: rotate(-20deg);
 }
 
 .hero-overlay {
@@ -120,9 +175,9 @@ a {
     background:
         linear-gradient(
             90deg,
-            rgba(5,18,14,.9) 0%,
-            rgba(5,18,14,.63) 42%,
-            rgba(5,18,14,.1) 78%
+            rgba(5,18,14,.92) 0%,
+            rgba(5,18,14,.68) 43%,
+            rgba(5,18,14,.12) 82%
         ),
         linear-gradient(
             0deg,
@@ -186,7 +241,8 @@ a {
 
 .hero-button:hover {
     transform: translateY(-4px);
-    box-shadow: 0 15px 35px rgba(183,243,107,.2);
+    box-shadow:
+        0 15px 35px rgba(183,243,107,.2);
 }
 
 .hero-button b {
@@ -199,7 +255,6 @@ a {
     letter-spacing: 3px;
     text-transform: uppercase;
     opacity: .6;
-    animation: float 2s ease-in-out infinite;
 }
 
 .section {
@@ -232,37 +287,73 @@ a {
     color: var(--muted);
 }
 
-.story-image {
-    width: 100%;
-    height: 430px;
-    border-radius: 30px;
-    box-shadow: 0 25px 70px rgba(0,0,0,.15);
-    background:
-        radial-gradient(circle at 70% 25%, rgba(183,243,107,.55), transparent 18%),
-        linear-gradient(145deg, #dfe8dd, #a9c1ad 48%, #29483c);
+.story-visual {
+    min-height: 470px;
+    border-radius: 34px;
+    overflow: hidden;
+    position: relative;
     display: flex;
-    flex-direction: column;
-    justify-content: flex-end;
+    align-items: end;
     padding: 42px;
-    color: #10201b;
+    color: white;
+    background:
+        radial-gradient(
+            circle at 72% 22%,
+            rgba(183,243,107,.5),
+            transparent 18%
+        ),
+        linear-gradient(
+            145deg,
+            #dfe8dd,
+            #789984 50%,
+            #19382d
+        );
+    box-shadow:
+        0 30px 80px rgba(0,0,0,.15);
 }
 
-.story-image span {
+.story-visual::before {
+    content: "";
+    position: absolute;
+    width: 250px;
+    height: 250px;
+    border-radius: 50%;
+    right: 70px;
+    top: 70px;
+    border: 1px solid rgba(255,255,255,.6);
+}
+
+.story-visual::after {
+    content: "";
+    position: absolute;
+    width: 130px;
+    height: 260px;
+    border-radius: 70px;
+    right: 130px;
+    top: 140px;
+    background: rgba(183,243,107,.72);
+    transform: rotate(18deg);
+}
+
+.story-text {
+    position: relative;
+    z-index: 2;
+}
+
+.story-text span {
+    display: block;
     font-size: 11px;
     letter-spacing: 3px;
     font-weight: 800;
-    opacity: .65;
+    margin-bottom: 12px;
 }
 
-.story-image b {
-    margin-top: 8px;
-    font-size: clamp(28px, 4vw, 48px);
+.story-text b {
+    display: block;
+    max-width: 430px;
+    font-size: clamp(32px, 4vw, 54px);
+    line-height: 1;
     letter-spacing: -2px;
-    max-width: 420px;
-}
-
-.story-image:hover {
-    transform: scale(1.015);
 }
 
 .stat-row {
@@ -284,7 +375,8 @@ a {
 
 .stat:hover {
     transform: translateY(-5px);
-    box-shadow: 0 15px 30px rgba(0,0,0,.08);
+    box-shadow:
+        0 15px 30px rgba(0,0,0,.08);
 }
 
 .stat-icon {
@@ -307,10 +399,6 @@ a {
     justify-content: space-between;
     align-items: end;
     gap: 30px;
-}
-
-.guides-heading .big-heading {
-    margin-bottom: 0;
 }
 
 .guide-intro {
@@ -341,7 +429,8 @@ a {
 .guide-card:hover {
     transform: translateY(-9px);
     border-color: rgba(183,243,107,.55);
-    box-shadow: 0 25px 55px rgba(0,0,0,.25);
+    box-shadow:
+        0 25px 55px rgba(0,0,0,.25);
 }
 
 .card-image {
@@ -350,32 +439,15 @@ a {
     overflow: hidden;
 }
 
-.card-art {
+.card-image img {
     width: 100%;
     height: 100%;
-    background:
-        radial-gradient(circle at 75% 25%, rgba(183,243,107,.32), transparent 20%),
-        linear-gradient(145deg, #29483c, #10201b 65%);
+    object-fit: cover;
     transition: transform .6s ease;
 }
 
-.guide-card:nth-child(2) .card-art { background: linear-gradient(145deg, #30483d, #17231f); }
-.guide-card:nth-child(3) .card-art { background: linear-gradient(145deg, #566a54, #17231f); }
-.guide-card:nth-child(4) .card-art { background: linear-gradient(145deg, #3c5548, #0e1916); }
-
-.guide-card:hover .card-art {
-    transform: scale(1.03);
-}
-
-.card-gradient {
-    position: absolute;
-    inset: 0;
-    background:
-        linear-gradient(
-            0deg,
-            rgba(0,0,0,.55),
-            transparent 60%
-        );
+.guide-card:hover .card-image img {
+    transform: scale(1.05);
 }
 
 .card-tag {
@@ -414,32 +486,42 @@ a {
 
 .cta-section {
     position: relative;
-    min-height: 620px;
+    min-height: 600px;
     overflow: hidden;
     display: flex;
     align-items: center;
-}
-
-.cta-image {
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
     background:
-        radial-gradient(circle at 82% 38%, rgba(183,243,107,.28), transparent 22%),
-        linear-gradient(125deg, #dfe8dd 0%, #b9cdbd 48%, #5d7565 100%);
-}
-
-.cta-overlay {
-    position: absolute;
-    inset: 0;
-    background:
+        radial-gradient(
+            circle at 80% 35%,
+            rgba(183,243,107,.3),
+            transparent 24%
+        ),
         linear-gradient(
-            90deg,
-            rgba(244,243,237,.98) 0%,
-            rgba(244,243,237,.82) 43%,
-            rgba(244,243,237,.08) 100%
+            135deg,
+            #dfe8dd,
+            #9eb6a3
         );
+}
+
+.cta-visual {
+    position: absolute;
+    right: 5%;
+    width: 470px;
+    height: 470px;
+    border-radius: 50%;
+    border: 1px solid rgba(16,32,27,.25);
+}
+
+.cta-visual::before {
+    content: "";
+    position: absolute;
+    width: 300px;
+    height: 300px;
+    left: 85px;
+    top: 85px;
+    border-radius: 48%;
+    background: rgba(16,32,27,.10);
+    transform: rotate(25deg);
 }
 
 .cta-content {
@@ -514,50 +596,6 @@ footer {
     line-height: 1.6;
 }
 
-.reveal {
-    opacity: 0;
-    transform: translateY(25px);
-    animation: reveal .8s ease forwards;
-}
-
-.guide-card:nth-child(2) {
-    animation-delay: .08s;
-}
-
-.guide-card:nth-child(3) {
-    animation-delay: .16s;
-}
-
-.guide-card:nth-child(4) {
-    animation-delay: .24s;
-}
-
-@keyframes reveal {
-
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-
-}
-
-@keyframes heroZoom {
-    from { opacity: .92; }
-    to { opacity: 1; }
-}
-
-@keyframes float {
-
-    0%,100% {
-        transform: translateY(0);
-    }
-
-    50% {
-        transform: translateY(7px);
-    }
-
-}
-
 @media (max-width: 950px) {
 
     .nav-links {
@@ -569,10 +607,6 @@ footer {
         gap: 50px;
     }
 
-    .story-image {
-        height: 330px;
-    }
-
     .guide-grid {
         grid-template-columns: repeat(2,1fr);
     }
@@ -581,6 +615,9 @@ footer {
         grid-template-columns: repeat(2,1fr);
     }
 
+    .cta-visual {
+        opacity: .4;
+    }
 }
 
 @media (max-width: 600px) {
@@ -609,8 +646,8 @@ footer {
         grid-template-columns: 1fr 1fr;
     }
 
-    .cta-section {
-        min-height: 560px;
+    .story-visual {
+        min-height: 360px;
     }
 
     .footer-inner {
@@ -627,499 +664,641 @@ footer {
 
 <nav class="nav">
 
-    <div class="logo">
-        Stronger<span>Years</span>
-    </div>
+<div class="logo">
+    Stronger<span>Years</span>
+</div>
 
-    <div class="nav-links">
+<div class="nav-links">
 
-        <a href="#guides">
-            Guides
-        </a>
+<a href="#guides">
+    Guides
+</a>
 
-        <a href="#approach">
-            Approach
-        </a>
+<a href="#approach">
+    Approach
+</a>
 
-        <a href="#start">
-            Start
-        </a>
+<a href="#start">
+    Start
+</a>
 
-    </div>
+</div>
 
 </nav>
 
 <header class="hero">
 
-    <div class="hero-image" aria-hidden="true"></div>
+<div class="hero-visual"
+aria-hidden="true"></div>
 
-    <div class="hero-overlay"></div>
+<div class="hero-overlay"></div>
 
-    <div class="hero-content">
+<div class="hero-content">
 
-        <div class="eyebrow">
-            Healthy aging · Strength · Vitality
-        </div>
+<div class="eyebrow">
+    Healthy aging · Strength · Vitality
+</div>
 
-        <h1>
-            Age well.<br>
-            <span>Live strong.</span>
-        </h1>
+<h1>
+    Age well.<br>
+    <span>Live strong.</span>
+</h1>
 
-        <p class="hero-copy">
-            Practical guides, simple habits and thoughtful ideas
-            for maintaining strength, mobility and everyday vitality
-            as you get older.
-        </p>
+<p class="hero-copy">
+    Practical guides, simple habits and thoughtful ideas
+    for maintaining strength, mobility and everyday vitality
+    as you get older.
+</p>
 
-        <a
-            class="hero-button"
-            href="#guides"
-        >
-            Explore the guides
-            <b>→</b>
-        </a>
+<a
+class="hero-button"
+href="#guides">
 
-        <div class="scroll">
-            Scroll to explore ↓
-        </div>
+    Explore the guides
+    <b>→</b>
 
-    </div>
+</a>
+
+<div class="scroll">
+    Scroll to explore ↓
+</div>
+
+</div>
 
 </header>
 
+
 <section
-    class="section"
-    id="approach"
->
+class="section"
+id="approach">
 
-    <div class="section-inner split">
+<div class="section-inner split">
 
-        <div>
+<div>
 
-            <div class="eyebrow">
-                The bigger picture
-            </div>
+<div class="eyebrow">
+    The bigger picture
+</div>
 
-            <h2 class="big-heading">
-                Your best years aren't behind you.
-            </h2>
+<h2 class="big-heading">
+    Your best years aren't behind you.
+</h2>
 
-            <p class="body-copy">
-                Healthy aging is about staying engaged with the
-                things you enjoy. Movement, nutrition, recovery
-                and consistent habits can all play a role in
-                supporting an active lifestyle.
-            </p>
+<p class="body-copy">
+    Healthy aging is about staying engaged with the
+    things you enjoy. Movement, nutrition, recovery
+    and consistent habits can all play a role in
+    supporting an active lifestyle.
+</p>
 
-            <div class="stat-row">
+<div class="stat-row">
 
-                <div class="stat">
-                    <div class="stat-icon">
-                        🏋️
-                    </div>
-                    <strong>
-                        Strength
-                    </strong>
-                </div>
+<div class="stat">
+    <div class="stat-icon">🏋️</div>
+    <strong>Strength</strong>
+</div>
 
-                <div class="stat">
-                    <div class="stat-icon">
-                        🧘
-                    </div>
-                    <strong>
-                        Mobility
-                    </strong>
-                </div>
+<div class="stat">
+    <div class="stat-icon">🧘</div>
+    <strong>Mobility</strong>
+</div>
 
-                <div class="stat">
-                    <div class="stat-icon">
-                        🥗
-                    </div>
-                    <strong>
-                        Nutrition
-                    </strong>
-                </div>
+<div class="stat">
+    <div class="stat-icon">🥗</div>
+    <strong>Nutrition</strong>
+</div>
 
-                <div class="stat">
-                    <div class="stat-icon">
-                        ⚡
-                    </div>
-                    <strong>
-                        Vitality
-                    </strong>
-                </div>
+<div class="stat">
+    <div class="stat-icon">⚡</div>
+    <strong>Vitality</strong>
+</div>
 
-            </div>
+</div>
 
-        </div>
+</div>
 
-        <div class="story-image" aria-hidden="true">
-            <span>STRONGER YEARS</span>
-            <b>Move. Nourish. Recover.</b>
-        </div>
+<div
+class="story-visual"
+aria-hidden="true">
 
-    </div>
+<div class="story-text">
+
+<span>
+    STRONGER YEARS
+</span>
+
+<b>
+    Move.<br>
+    Nourish.<br>
+    Recover.
+</b>
+
+</div>
+
+</div>
+
+</div>
 
 </section>
 
+
 <section
-    class="section guides"
-    id="guides"
+class="section guides"
+id="guides">
+
+<div class="section-inner">
+
+<div class="guides-heading">
+
+<div>
+
+<div class="eyebrow">
+    Latest guides
+</div>
+
+<h2 class="big-heading">
+    Ideas worth reading.
+</h2>
+
+</div>
+
+<p class="guide-intro">
+    Practical articles about strength, nutrition,
+    recovery, mobility and healthy aging.
+</p>
+
+</div>
+
+<div class="guide-grid">
+
+
+<a
+class="guide-card"
+href="content/why-staying-strong-matters-after-50-and-how-to-keep-your-muscles-working-for-you-2026-09-16-120725.html">
+
+<div class="card-image">
+
+<img
+src="content/assets/why-staying-strong-matters-after-50-and-how-to-keep-your-muscles-working-for-you.svg"
+alt="Why Staying Strong Matters After 50 — and How to Keep Your Muscles Working for You"
+loading="lazy"
 >
 
-    <div class="section-inner">
+<div class="card-tag">
+    GUIDE
+</div>
 
-        <div class="guides-heading">
+</div>
 
-            <div>
+<div class="card-content">
 
-                <div class="eyebrow">
-                    Latest guides
-                </div>
+<h3>
+    Why Staying Strong Matters After 50 — and How to Keep Your Muscles Working for You
+</h3>
 
-                <h2 class="big-heading">
-                    Ideas worth reading.
-                </h2>
+<span class="read-link">
+    Read guide <b>→</b>
+</span>
 
-            </div>
+</div>
 
-            <p class="guide-intro">
-                Practical articles about strength, nutrition,
-                recovery, mobility and healthy aging.
-            </p>
+</a>
 
-        </div>
 
-        <div class="guide-grid">
+<a
+class="guide-card"
+href="content/strengthening-what-matters-a-guide-to-active-aging-after-50-2026-09-16-115654.html">
 
-            
-            <a
-                class="guide-card reveal"
-                href="content/why-staying-strong-matters-after-50-and-how-to-keep-your-muscles-working-for-you-2026-09-16-120725.html"
-            >
+<div class="card-image">
 
-                <div class="card-image">
+<img
+src="content/assets/strengthening-what-matters-a-guide-to-active-aging-after-50.svg"
+alt="Strengthening What Matters: A Guide to Active Aging After 50"
+loading="lazy"
+>
 
-                    <div class="card-art" style="background-image:url('content/assets/why-staying-strong-matters-after-50-and-how-to-keep-your-muscles-working-for-you.svg');" aria-hidden="true"></div>
+<div class="card-tag">
+    GUIDE
+</div>
 
-                    <div class="card-gradient"></div>
+</div>
 
-                    <span class="card-tag">
-                        GUIDE
-                    </span>
+<div class="card-content">
 
-                </div>
+<h3>
+    Strengthening What Matters: A Guide to Active Aging After 50
+</h3>
 
-                <div class="card-content">
+<span class="read-link">
+    Read guide <b>→</b>
+</span>
 
-                    <h3>
-                        Why Staying Strong Matters After 50 — and How to Keep Your Muscles Working for You | StrongerYears
-                    </h3>
+</div>
 
-                    <span class="read-link">
-                        Read guide <b>→</b>
-                    </span>
+</a>
 
-                </div>
 
-            </a>
-            
+<a
+class="guide-card"
+href="content/selecting-a-muscle-support-supplement-for-healthy-aging-2026-09-15-142326.html">
 
-            <a
-                class="guide-card reveal"
-                href="content/strengthening-what-matters-a-guide-to-active-aging-after-50-2026-09-16-115654.html"
-            >
+<div class="card-image">
 
-                <div class="card-image">
+<img
+src="content/assets/selecting-a-muscle-support-supplement-for-healthy-aging.svg"
+alt="Selecting a Muscle Support Supplement for Healthy Aging"
+loading="lazy"
+>
 
-                    <div class="card-art" style="background-image:url('content/assets/strengthening-what-matters-a-guide-to-active-aging-after-50-strongeryears.svg');" aria-hidden="true"></div>
+<div class="card-tag">
+    GUIDE
+</div>
 
-                    <div class="card-gradient"></div>
+</div>
 
-                    <span class="card-tag">
-                        GUIDE
-                    </span>
+<div class="card-content">
 
-                </div>
+<h3>
+    Selecting a Muscle Support Supplement for Healthy Aging
+</h3>
 
-                <div class="card-content">
+<span class="read-link">
+    Read guide <b>→</b>
+</span>
 
-                    <h3>
-                        Strengthening What Matters: A Guide to Active Aging After 50 | StrongerYears
-                    </h3>
+</div>
 
-                    <span class="read-link">
-                        Read guide <b>→</b>
-                    </span>
+</a>
 
-                </div>
 
-            </a>
-            
+<a
+class="guide-card"
+href="content/nutrition-strategies-for-staying-active-and-vital-after-50-2026-09-15-145156.html">
 
-            <a
-                class="guide-card reveal"
-                href="content/selecting-a-muscle-support-supplement-for-healthy-aging-2026-09-15-142326.html"
-            >
+<div class="card-image">
 
-                <div class="card-image">
+<img
+src="content/assets/nutrition-strategies-for-staying-active-and-vital-after-50.svg"
+alt="Nutrition Strategies for Staying Active and Vital After 50"
+loading="lazy"
+>
 
-                    <div class="card-art" style="background-image:url('content/assets/selecting-a-muscle-support-supplement-for-healthy-aging-strongeryears.svg');" aria-hidden="true"></div>
+<div class="card-tag">
+    GUIDE
+</div>
 
-                    <div class="card-gradient"></div>
+</div>
 
-                    <span class="card-tag">
-                        GUIDE
-                    </span>
+<div class="card-content">
 
-                </div>
+<h3>
+    Nutrition Strategies for Staying Active and Vital After 50
+</h3>
 
-                <div class="card-content">
+<span class="read-link">
+    Read guide <b>→</b>
+</span>
 
-                    <h3>
-                        Selecting a Muscle Support Supplement for Healthy Aging | StrongerYears
-                    </h3>
+</div>
 
-                    <span class="read-link">
-                        Read guide <b>→</b>
-                    </span>
+</a>
 
-                </div>
 
-            </a>
-            
+<a
+class="guide-card"
+href="content/moving-freely-after-50-how-to-build-strength-energy-and-mobility-for-daily-life-2026-09-16-120318.html">
 
-            <a
-                class="guide-card reveal"
-                href="content/nutrition-strategies-for-staying-active-and-vital-after-50-2026-09-15-145156.html"
-            >
+<div class="card-image">
 
-                <div class="card-image">
+<img
+src="content/assets/moving-freely-after-50-how-to-build-strength-energy-and-mobility-for-daily-life.svg"
+alt="Moving Freely After 50: How to Build Strength, Energy, and Mobility for Daily Life"
+loading="lazy"
+>
 
-                    <div class="card-art" style="background-image:url('content/assets/nutrition-strategies-for-staying-active-and-vital-after-50-strongeryears.svg');" aria-hidden="true"></div>
+<div class="card-tag">
+    GUIDE
+</div>
 
-                    <div class="card-gradient"></div>
+</div>
 
-                    <span class="card-tag">
-                        GUIDE
-                    </span>
+<div class="card-content">
 
-                </div>
+<h3>
+    Moving Freely After 50: How to Build Strength, Energy, and Mobility for Daily Life
+</h3>
 
-                <div class="card-content">
+<span class="read-link">
+    Read guide <b>→</b>
+</span>
 
-                    <h3>
-                        Nutrition Strategies for Staying Active and Vital After 50 | StrongerYears
-                    </h3>
+</div>
 
-                    <span class="read-link">
-                        Read guide <b>→</b>
-                    </span>
+</a>
 
-                </div>
 
-            </a>
-            
+<a
+class="guide-card"
+href="content/morning-habits-for-strength-and-vitality-after-50.html">
 
-            <a
-                class="guide-card reveal"
-                href="content/moving-freely-after-50-how-to-build-strength-energy-and-mobility-for-daily-life-2026-09-16-120318.html"
-            >
+<div class="card-image">
 
-                <div class="card-image">
+<img
+src="content/assets/morning-habits-for-strength-and-vitality-after-50.svg"
+alt="Morning Habits for Strength and Vitality After 50"
+loading="lazy"
+>
 
-                    <div class="card-art" style="background-image:url('content/assets/moving-freely-after-50-how-to-build-strength-energy-and-mobility-for-daily-life.svg');" aria-hidden="true"></div>
+<div class="card-tag">
+    GUIDE
+</div>
 
-                    <div class="card-gradient"></div>
+</div>
 
-                    <span class="card-tag">
-                        GUIDE
-                    </span>
+<div class="card-content">
 
-                </div>
+<h3>
+    Morning Habits for Strength and Vitality After 50
+</h3>
 
-                <div class="card-content">
+<span class="read-link">
+    Read guide <b>→</b>
+</span>
 
-                    <h3>
-                        Moving Freely After 50: How to Build Strength, Energy, and Mobility for Daily Life | StrongerYears
-                    </h3>
+</div>
 
-                    <span class="read-link">
-                        Read guide <b>→</b>
-                    </span>
+</a>
 
-                </div>
 
-            </a>
-            
+<a
+class="guide-card"
+href="content/how-to-choose-the-right-amino-acid-supplement-for-healthy-aging-and-active-living-2026-09-15-135408.html">
 
-            <a
-                class="guide-card reveal"
-                href="content/morning-habits-for-strength-and-vitality-after-50.html"
-            >
+<div class="card-image">
 
-                <div class="card-image">
+<img
+src="content/assets/how-to-choose-the-right-amino-acid-supplement-for-healthy-aging-and-active-livin.svg"
+alt="How to Choose the Right Amino Acid Supplement for Healthy Aging and Active Living"
+loading="lazy"
+>
 
-                    <div class="card-art" style="background-image:url('content/assets/morning-habits-for-strength-and-vitality-after-50-strongeryears.svg');" aria-hidden="true"></div>
+<div class="card-tag">
+    GUIDE
+</div>
 
-                    <div class="card-gradient"></div>
+</div>
 
-                    <span class="card-tag">
-                        GUIDE
-                    </span>
+<div class="card-content">
 
-                </div>
+<h3>
+    How to Choose the Right Amino Acid Supplement for Healthy Aging and Active Living
+</h3>
 
-                <div class="card-content">
+<span class="read-link">
+    Read guide <b>→</b>
+</span>
 
-                    <h3>
-                        Morning Habits for Strength and Vitality After 50 | StrongerYears
-                    </h3>
+</div>
 
-                    <span class="read-link">
-                        Read guide <b>→</b>
-                    </span>
+</a>
 
-                </div>
 
-            </a>
-            
+<a
+class="guide-card"
+href="content/gentle-strategies-to-aid-muscle-recovery-after-50-2026-09-17-081904.html">
 
-            <a
-                class="guide-card reveal"
-                href="content/how-to-choose-the-right-amino-acid-supplement-for-healthy-aging-and-active-living-2026-09-15-135408.html"
-            >
+<div class="card-image">
 
-                <div class="card-image">
+<img
+src="content/assets/gentle-strategies-to-aid-muscle-recovery-after-50.svg"
+alt="Gentle Strategies to Aid Muscle Recovery After 50"
+loading="lazy"
+>
 
-                    <div class="card-art" style="background-image:url('content/assets/how-to-choose-the-right-amino-acid-supplement-for-healthy-aging-and-active-livin.svg');" aria-hidden="true"></div>
+<div class="card-tag">
+    GUIDE
+</div>
 
-                    <div class="card-gradient"></div>
+</div>
 
-                    <span class="card-tag">
-                        GUIDE
-                    </span>
+<div class="card-content">
 
-                </div>
+<h3>
+    Gentle Strategies to Aid Muscle Recovery After 50
+</h3>
 
-                <div class="card-content">
+<span class="read-link">
+    Read guide <b>→</b>
+</span>
 
-                    <h3>
-                        How to Choose the Right Amino Acid Supplement for Healthy Aging and Active Living | StrongerYears
-                    </h3>
+</div>
 
-                    <span class="read-link">
-                        Read guide <b>→</b>
-                    </span>
+</a>
 
-                </div>
 
-            </a>
-            
+<a
+class="guide-card"
+href="content/everyday-nutrition-habits-to-preserve-strength-after-50-2026-09-16-112426.html">
 
-            <a
-                class="guide-card reveal"
-                href="content/everyday-nutrition-habits-to-preserve-strength-after-50-2026-09-16-112426.html"
-            >
+<div class="card-image">
 
-                <div class="card-image">
+<img
+src="content/assets/everyday-nutrition-habits-to-preserve-strength-after-50.svg"
+alt="**Everyday Nutrition Habits to Preserve Strength After 50**"
+loading="lazy"
+>
 
-                    <div class="card-art" style="background-image:url('content/assets/everyday-nutrition-habits-to-preserve-strength-after-50-strongeryears.svg');" aria-hidden="true"></div>
+<div class="card-tag">
+    GUIDE
+</div>
 
-                    <div class="card-gradient"></div>
+</div>
 
-                    <span class="card-tag">
-                        GUIDE
-                    </span>
+<div class="card-content">
 
-                </div>
+<h3>
+    **Everyday Nutrition Habits to Preserve Strength After 50**
+</h3>
 
-                <div class="card-content">
+<span class="read-link">
+    Read guide <b>→</b>
+</span>
 
-                    <h3>
-                        **Everyday Nutrition Habits to Preserve Strength After 50** | StrongerYears
-                    </h3>
+</div>
 
-                    <span class="read-link">
-                        Read guide <b>→</b>
-                    </span>
+</a>
 
-                </div>
 
-            </a>
-            
+<a
+class="guide-card"
+href="content/combining-strength-training-and-smart-nutrition-for-a-vibrant-future-after-50-2026-09-16-112640.html">
 
-        </div>
+<div class="card-image">
 
-    </div>
+<img
+src="content/assets/combining-strength-training-and-smart-nutrition-for-a-vibrant-future-after-50.svg"
+alt="**Combining Strength Training and Smart Nutrition for a Vibrant Future After 50**"
+loading="lazy"
+>
+
+<div class="card-tag">
+    GUIDE
+</div>
+
+</div>
+
+<div class="card-content">
+
+<h3>
+    **Combining Strength Training and Smart Nutrition for a Vibrant Future After 50**
+</h3>
+
+<span class="read-link">
+    Read guide <b>→</b>
+</span>
+
+</div>
+
+</a>
+
+
+<a
+class="guide-card"
+href="content/building-muscular-resilience-after-50-a-practical-guide-for-active-living-2026-09-16-111547.html">
+
+<div class="card-image">
+
+<img
+src="content/assets/building-muscular-resilience-after-50-a-practical-guide-for-active-living.svg"
+alt="Building Muscular Resilience After 50: A Practical Guide for Active Living"
+loading="lazy"
+>
+
+<div class="card-tag">
+    GUIDE
+</div>
+
+</div>
+
+<div class="card-content">
+
+<h3>
+    Building Muscular Resilience After 50: A Practical Guide for Active Living
+</h3>
+
+<span class="read-link">
+    Read guide <b>→</b>
+</span>
+
+</div>
+
+</a>
+
+
+<a
+class="guide-card"
+href="content/build-strength-and-vitality-as-you-age-2026-09-15-132728.html">
+
+<div class="card-image">
+
+<img
+src="content/assets/build-strength-and-vitality-as-you-age.svg"
+alt="Build Strength and Vitality as You Age"
+loading="lazy"
+>
+
+<div class="card-tag">
+    GUIDE
+</div>
+
+</div>
+
+<div class="card-content">
+
+<h3>
+    Build Strength and Vitality as You Age
+</h3>
+
+<span class="read-link">
+    Read guide <b>→</b>
+</span>
+
+</div>
+
+</a>
+
+
+</div>
+
+</div>
 
 </section>
 
+
 <section
-    class="cta-section"
-    id="start"
->
+class="cta-section"
+id="start">
 
-    <div class="cta-image" aria-hidden="true"></div>
+<div
+class="cta-visual"
+aria-hidden="true">
+</div>
 
-    <div class="cta-overlay"></div>
+<div class="cta-content">
 
-    <div class="cta-content">
+<div class="eyebrow">
+    Start simple
+</div>
 
-        <div class="eyebrow">
-            Start simple
-        </div>
+<h2>
+    Better habits.<br>
+    Stronger days.
+</h2>
 
-        <h2>
-            Better habits.<br>
-            Stronger days.
-        </h2>
+<p>
+    Explore practical approaches to movement, nutrition,
+    recovery and healthy aging — one useful idea at a time.
+</p>
 
-        <p>
-            Explore practical approaches to movement, nutrition,
-            recovery and healthy aging — one useful idea at a time.
-        </p>
+<a
+class="outline-button"
+href="#guides">
+    Browse all guides →
+</a>
 
-        <a
-            class="outline-button"
-            href="#guides"
-        >
-            Browse all guides →
-        </a>
+<div class="disclosure">
+    I may earn a commission if you buy through links on this page, at no extra cost to you.
+</div>
 
-        <div class="disclosure">
-            I may earn a commission if you buy through links on this page, at no extra cost to you.
-        </div>
-
-    </div>
+</div>
 
 </section>
+
 
 <footer>
 
-    <div class="footer-inner">
+<div class="footer-inner">
 
-        <div>
+<div>
 
-            <div class="logo">
-                Stronger<span>Years</span>
-            </div>
+<div class="logo">
+    Stronger<span>Years</span>
+</div>
 
-        </div>
+</div>
 
-        <div class="footer-note">
+<div class="footer-note">
 
-            Independent educational content about healthy aging,
-            strength, mobility and everyday wellness.
+Independent educational content about healthy aging,
+strength, mobility and everyday wellness.
 
-            <br><br>
+<br><br>
 
-            I may earn a commission if you buy through links on this page, at no extra cost to you.
+I may earn a commission if you buy through links on this page, at no extra cost to you.
 
-        </div>
+</div>
 
-    </div>
+</div>
 
 </footer>
 
