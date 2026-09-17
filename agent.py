@@ -19,7 +19,7 @@ AFFILIATE_LINK = (
 SITE_NAME = "StrongerYears"
 
 # Pinterest website verification
-PINTEREST_VERIFY = "<meta name=\"p:domain_verify\" content=\"f01655977a15f47a6a69d0278378f96\"/>"
+PINTEREST_VERIFY = "<meta name=\"p:domain_verify\" content=\"f016855977a15f47f6a69d0278378f96\"/>"
 
 DISCLOSURE = (
     "I may earn a commission if you buy through links on this page, "
