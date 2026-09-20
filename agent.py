@@ -18,17 +18,11 @@ CONTENT_DIR = "content"
 PINTEREST_DIR = os.path.join(CONTENT_DIR, "pinterest")
 PINTEREST_BOARD = "Healthy Aging & Strength"
 PINTEREST_SIZE = (1000, 1500)
+IMAGE_DIR = os.path.join(CONTENT_DIR, "images")
 
 AFFILIATE_LINK = "https://www.advancedbionutritionals.com/DS24/Advanced-Amino/Muscle-Mass-Loss/HD.htm#aff=Healthy_w0rld"
 DISCLOSURE = "I may earn a commission if you buy through links on this page, at no extra cost to you."
 
-HERO_IMAGE = "https://images.unsplash.com/photo-1538805060514-97d9cc17730c?auto=format&fit=crop&w=2200&q=85"
-CARD_IMAGES = [
-    "https://images.unsplash.com/photo-1538805060514-97d9cc17730c?auto=format&fit=crop&w=1200&q=82",
-    "https://images.unsplash.com/photo-1547592180-85f173990554?auto=format&fit=crop&w=1200&q=82",
-    "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?auto=format&fit=crop&w=1200&q=82",
-    "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?auto=format&fit=crop&w=1200&q=82",
-]
 
 TOPICS = [
     "How to maintain muscle strength as you age",
@@ -164,6 +158,24 @@ def extract_json(raw):
         if m:
             return json.loads(m.group(0))
         raise ValueError("AI did not return valid JSON")
+
+# =========================================================
+# UNIQUE ARTICLE VISUALS
+# =========================================================
+def create_topic_visual(title, keyword, slug):
+    Path(IMAGE_DIR).mkdir(parents=True, exist_ok=True)
+    image_path = Path(IMAGE_DIR) / f"{slug}.svg"
+    seed = sum(ord(c) for c in (title + keyword))
+    hue1 = 145 + (seed % 55)
+    hue2 = 80 + (seed % 35)
+    safe_title = html.escape(title[:72], quote=True)
+    safe_keyword = html.escape(keyword[:58], quote=True)
+    svg = f'''<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900"><defs><linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#081512"/><stop offset=".55" stop-color="hsl({hue1},32%,24%)"/><stop offset="1" stop-color="hsl({hue2},42%,32%)"/></linearGradient><radialGradient id="glow"><stop offset="0" stop-color="#b7f36b" stop-opacity=".34"/><stop offset="1" stop-color="#b7f36b" stop-opacity="0"/></radialGradient></defs><rect width="1600" height="900" fill="url(#bg)"/><circle cx="1270" cy="170" r="330" fill="url(#glow)"/><circle cx="180" cy="790" r="260" fill="#b7f36b" opacity=".07"/><path d="M0 690 C260 560 420 760 690 620 S1190 420 1600 570 L1600 900 L0 900Z" fill="#06100d" opacity=".72"/><g fill="none" stroke="#b7f36b" stroke-width="7" opacity=".72"><circle cx="1240" cy="400" r="145"/><circle cx="1240" cy="400" r="105" opacity=".65"/><path d="M1095 400h290M1240 255v290"/></g><text x="95" y="105" fill="#b7f36b" font-family="Arial" font-size="30" font-weight="700" letter-spacing="5">STRONGERYEARS</text><text x="95" y="170" fill="#d8e6df" font-family="Arial" font-size="22" letter-spacing="3">HEALTHY AGING • STRENGTH • VITALITY</text><text x="95" y="590" fill="#fff" font-family="Arial" font-size="62" font-weight="700">{safe_title}</text><text x="95" y="655" fill="#d8e6df" font-family="Arial" font-size="27">{safe_keyword}</text><text x="95" y="795" fill="#b7f36b" font-family="Arial" font-size="24" font-weight="700">PRACTICAL GUIDE</text></svg>'''
+    image_path.write_text(svg, encoding="utf-8")
+    return str(image_path).replace("\\", "/")
+
+def article_image_url(slug):
+    return f"{SITE_URL}/content/images/{slug}.svg"
 
 # =========================================================
 # ARTICLE GENERATION
@@ -306,6 +318,7 @@ def article_html(title, description, keyword, body_html, related, published_at=N
     safe_desc = html.escape(description, quote=True)
     slug = slugify(title)
     canonical = f"{SITE_URL}/content/{slug}.html"
+    image_url = article_image_url(slug)
     published_at = published_at or datetime.now(timezone.utc).isoformat()
 
     related_html = "".join(
@@ -325,7 +338,7 @@ def article_html(title, description, keyword, body_html, related, published_at=N
         "dateModified": published_at,
         "author": {"@type": "Organization", "name": SITE_NAME},
         "publisher": {"@type": "Organization", "name": SITE_NAME},
-        "image": [HERO_IMAGE],
+        "image": [image_url],
         "keywords": keyword,
         "isPartOf": {"@type": "WebSite", "name": SITE_NAME, "url": SITE_URL + "/"},
     }
@@ -344,19 +357,19 @@ def article_html(title, description, keyword, body_html, related, published_at=N
 <meta property="og:type" content="article">
 <meta property="og:url" content="{canonical}">
 <meta property="og:site_name" content="{SITE_NAME}">
-<meta property="og:image" content="{HERO_IMAGE}">
+<meta property="og:image" content="{image_url}">
 <meta property="og:image:alt" content="{safe_title}">
 <meta property="article:published_time" content="{html.escape(published_at, quote=True)}">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="{safe_title}">
 <meta name="twitter:description" content="{safe_desc}">
-<meta name="twitter:image" content="{HERO_IMAGE}">
+<meta name="twitter:image" content="{image_url}">
 <script type="application/ld+json">{schema_json}</script>
 <style>
 *{{box-sizing:border-box}}html{{scroll-behavior:smooth}}body{{margin:0;background:#f4f3ed;color:#10201b;font-family:Arial,Helvetica,sans-serif;line-height:1.75}}nav{{padding:24px 7%;display:flex;justify-content:space-between;background:#0b1715;color:#fff;position:relative;z-index:2}}.logo{{font-size:21px;font-weight:800;letter-spacing:-1px}}.logo span{{color:#b7f36b}}nav a{{color:#fff;text-decoration:none;font-size:13px}}.hero{{min-height:500px;position:relative;display:flex;align-items:end;overflow:hidden;color:#fff;background:#10201b}}.hero img{{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}}.shade{{position:absolute;inset:0;background:linear-gradient(90deg,rgba(5,18,14,.9),rgba(5,18,14,.18)),linear-gradient(0deg,rgba(5,18,14,.7),transparent)}}.hero-content{{position:relative;z-index:1;max-width:1100px;width:100%;margin:auto;padding:80px 7%}}.eyebrow{{color:#b7f36b;text-transform:uppercase;letter-spacing:3px;font-size:11px;font-weight:800}}h1{{max-width:900px;font-size:clamp(44px,7vw,82px);line-height:.97;letter-spacing:-4px;margin:18px 0}}.article{{max-width:820px;margin:auto;padding:75px 7% 90px}}.article p{{font-size:18px}}.article h2{{margin-top:58px;font-size:34px;line-height:1.1;letter-spacing:-1px}}.article h3{{margin-top:34px;font-size:23px}}.article li{{margin:10px 0}}.cta{{margin-top:70px;padding:44px;border-radius:28px;background:#0b1715;color:#fff}}.cta h2{{margin-top:0;font-size:34px}}.cta p{{color:rgba(255,255,255,.72)}}.button{{display:inline-block;margin-top:14px;padding:15px 23px;border-radius:999px;background:#b7f36b;color:#10201b;text-decoration:none;font-weight:800}}.disclosure{{margin-top:20px;font-size:11px;opacity:.5}}.related-wrap{{margin-top:70px}}.related{{display:grid;grid-template-columns:100px 1fr 30px;gap:18px;align-items:center;padding:22px 0;border-top:1px solid #d5d6ce;text-decoration:none;color:#10201b}}.related span{{font-size:10px;font-weight:800;letter-spacing:2px;color:#68736e}}.related b{{font-size:18px}}.related em{{font-style:normal;font-size:24px}}footer{{padding:45px 7%;text-align:center;background:#07110f;color:#fff;font-size:12px}}@media(max-width:650px){{h1{{letter-spacing:-2px}}.article{{padding-top:50px}}.cta{{padding:30px 24px}}.related{{grid-template-columns:1fr 25px}}.related span{{display:none}}}}
 </style></head><body>
 <nav><div class="logo">Stronger<span>Years</span></div><a href="../index.html">Home</a></nav>
-<header class="hero"><img src="{HERO_IMAGE}" alt="Active older adult outdoors"><div class="shade"></div><div class="hero-content"><div class="eyebrow">Strength · Vitality · Healthy aging</div><h1>{safe_title}</h1></div></header>
+<header class="hero"><img src="{image_url}" alt="Active older adult outdoors"><div class="shade"></div><div class="hero-content"><div class="eyebrow">Strength · Vitality · Healthy aging</div><h1>{safe_title}</h1></div></header>
 <main class="article"><div>{body_html}</div>
 <section class="cta"><h2>Want to explore the nutrition side?</h2><p>Amino acids are one part of the broader nutrition conversation around maintaining muscle and supporting an active lifestyle.</p><a class="button" href="{AFFILIATE_LINK}" target="_blank" rel="nofollow sponsored">Explore the Formula →</a><div class="disclosure">{DISCLOSURE}</div></section>
 <div class="related-wrap"><h2>More from StrongerYears</h2>{related_html}</div></main>
@@ -365,12 +378,12 @@ def article_html(title, description, keyword, body_html, related, published_at=N
 def build_homepage(articles):
     cards = []
     for i, (title, name) in enumerate(articles[:8]):
-        img = CARD_IMAGES[i % len(CARD_IMAGES)]
+        slug = Path(name).stem
+        img = article_image_url(slug)
         cards.append(f'''<a class="card" href="content/{html.escape(name)}"><div class="pic"><img src="{img}" alt="{html.escape(title)}" loading="lazy"></div><div class="cardbody"><small>GUIDE</small><h3>{html.escape(title)}</h3><span>Read guide →</span></div></a>''')
     cards_html = "".join(cards)
-    return f'''<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>{SITE_NAME} — Age well. Live strong.</title><meta name="description" content="Practical guides for strength, mobility, recovery, nutrition and healthy aging."><meta name="robots" content="index,follow,max-image-preview:large"><link rel="canonical" href="{SITE_URL}/"><meta property="og:title" content="{SITE_NAME} — Age well. Live strong."><meta property="og:description" content="Practical guides for strength, mobility, recovery, nutrition and healthy aging."><meta property="og:type" content="website"><meta property="og:site_name" content="{SITE_NAME}"><meta property="og:url" content="{SITE_URL}/"><meta property="og:image" content="{HERO_IMAGE}"><meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="{SITE_NAME} — Age well. Live strong."><meta name="twitter:description" content="Practical guides for strength, mobility, recovery, nutrition and healthy aging."><meta name="twitter:image" content="{HERO_IMAGE}"><script type="application/ld+json">{{"@context":"https://schema.org","@type":"WebSite","name":"{SITE_NAME}","url":"{SITE_URL}/"}}</script><style>
-*{{box-sizing:border-box}}body{{margin:0;background:#f4f3ed;color:#10201b;font-family:Arial,Helvetica,sans-serif}}.nav{{position:absolute;z-index:3;width:100%;padding:25px 6%;display:flex;justify-content:space-between;color:#fff}}.logo{{font-size:22px;font-weight:800;letter-spacing:-1px}}.logo span{{color:#b7f36b}}.nav a{{color:#fff;text-decoration:none;font-size:13px}}.hero{{height:92vh;min-height:620px;position:relative;display:flex;align-items:center;overflow:hidden;color:#fff}}.hero>img{{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;animation:zoom 12s ease-out forwards}}.shade{{position:absolute;inset:0;background:linear-gradient(90deg,rgba(5,18,14,.92),rgba(5,18,14,.18) 78%),linear-gradient(0deg,rgba(5,18,14,.55),transparent 55%)}}.hero-content{{position:relative;z-index:1;max-width:1150px;width:100%;margin:auto;padding:100px 6%}}.eyebrow{{color:#b7f36b;text-transform:uppercase;letter-spacing:4px;font-size:11px;font-weight:800}}h1{{font-size:clamp(58px,9vw,122px);line-height:.86;letter-spacing:-6px;max-width:950px;margin:20px 0}}.lead{{max-width:580px;font-size:19px;line-height:1.6;color:rgba(255,255,255,.78)}}.button{{display:inline-block;margin-top:24px;padding:16px 25px;border-radius:999px;background:#b7f36b;color:#10201b;text-decoration:none;font-weight:800}}section{{max-width:1200px;margin:auto;padding:100px 6%}}.intro{{display:grid;grid-template-columns:1fr 1fr;gap:70px;align-items:end}}.intro h2{{font-size:clamp(42px,5vw,70px);line-height:.95;letter-spacing:-3px;margin:0}}.intro p{{font-size:18px;line-height:1.7;color:#66716c}}.grid{{display:grid;grid-template-columns:repeat(2,1fr);gap:24px}}.card{{background:#fff;border-radius:28px;overflow:hidden;text-decoration:none;color:inherit;transition:transform .25s ease,box-shadow .25s ease}}.card:hover{{transform:translateY(-6px);box-shadow:0 20px 50px rgba(0,0,0,.10)}}.pic{{height:330px;overflow:hidden}}.pic img{{width:100%;height:100%;object-fit:cover;transition:transform .6s ease}}.card:hover img{{transform:scale(1.05)}}.cardbody{{padding:28px}}.cardbody small{{font-size:10px;letter-spacing:3px;font-weight:800;color:#718079}}.cardbody h3{{font-size:28px;line-height:1.1;letter-spacing:-1px;margin:13px 0 25px}}.cardbody span{{font-size:13px;font-weight:800}}.dark{{max-width:none;background:#0b1715;color:#fff}}.darkinner{{max-width:1200px;margin:auto;padding:110px 6%;display:grid;grid-template-columns:1fr 1fr;gap:70px;align-items:center}}.dark h2{{font-size:clamp(45px,6vw,80px);line-height:.9;letter-spacing:-4px;margin:0}}.dark p{{color:rgba(255,255,255,.68);font-size:18px;line-height:1.7}}.disclosure{{font-size:11px;opacity:.5;margin-top:18px}}footer{{padding:50px 6%;background:#07110f;color:#fff;text-align:center;font-size:12px}}@keyframes zoom{{from{{transform:scale(1.06)}}to{{transform:scale(1)}}}}@media(max-width:750px){{.intro,.darkinner,.grid{{grid-template-columns:1fr}}h1{{letter-spacing:-3px}}.pic{{height:260px}}section{{padding:70px 6%}}}}
-</style></head><body><nav class="nav"><div class="logo">Stronger<span>Years</span></div><a href="#guides">Guides</a></nav><header class="hero"><img src="{HERO_IMAGE}" alt="Active older adult outdoors"><div class="shade"></div><div class="hero-content"><div class="eyebrow">A better way to age</div><h1>Age well.<br>Live strong.</h1><p class="lead">Clear, practical ideas for strength, mobility, recovery and nutrition — without the hype.</p><a class="button" href="#guides">Explore the guides ↓</a></div></header><section><div class="intro"><h2>Strength is something you can keep building.</h2><p>Getting older does not mean giving up an active life. The basics still matter: regular movement, useful nutrition, recovery and habits you can actually repeat. StrongerYears turns those ideas into simple, readable guides.</p></div></section><section id="guides"><div class="grid">{cards_html}</div></section><div class="dark"><div class="darkinner"><h2>Make your everyday habits work harder.</h2><div><p>Explore practical nutrition ideas, including the role amino acids can play alongside a balanced diet and an active lifestyle.</p><a class="button" href="{AFFILIATE_LINK}" target="_blank" rel="nofollow sponsored">Explore the Formula →</a><div class="disclosure">{DISCLOSURE}</div></div></div></div><footer>© {datetime.now().year} {SITE_NAME}</footer></body></html>'''
+    latest_image = article_image_url(Path(articles[0][1]).stem) if articles else ""
+    return f'''<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>{SITE_NAME} — Age well. Live strong.</title><meta name="description" content="Practical guides for strength, mobility, recovery, nutrition and healthy aging."><meta name="robots" content="index,follow,max-image-preview:large"><link rel="canonical" href="{SITE_URL}/"><meta property="og:title" content="{SITE_NAME} — Age well. Live strong."><meta property="og:description" content="Practical guides for strength, mobility, recovery, nutrition and healthy aging."><meta property="og:type" content="website"><meta property="og:site_name" content="{SITE_NAME}"><meta property="og:url" content="{SITE_URL}/"><meta property="og:image" content="{latest_image}"><meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="{SITE_NAME} — Age well. Live strong."><meta name="twitter:description" content="Practical guides for strength, mobility, recovery, nutrition and healthy aging."><meta name="twitter:image" content="{latest_image}"><style>*{{box-sizing:border-box}}body{{margin:0;background:#f4f3ed;color:#10201b;font-family:Arial,Helvetica,sans-serif}}.nav{{position:absolute;z-index:3;width:100%;padding:25px 6%;display:flex;justify-content:space-between;color:#fff}}.logo{{font-size:22px;font-weight:800}}.logo span{{color:#b7f36b}}.nav a{{color:#fff;text-decoration:none;font-size:13px}}.hero{{height:75vh;min-height:560px;position:relative;display:flex;align-items:center;overflow:hidden;color:#fff}}.hero>img{{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}}.shade{{position:absolute;inset:0;background:linear-gradient(90deg,rgba(5,18,14,.92),rgba(5,18,14,.18) 78%),linear-gradient(0deg,rgba(5,18,14,.55),transparent 55%)}}.hero-content{{position:relative;z-index:1;max-width:1150px;width:100%;margin:auto;padding:100px 6%}}.eyebrow{{color:#b7f36b;text-transform:uppercase;letter-spacing:4px;font-size:11px;font-weight:800}}h1{{font-size:clamp(58px,9vw,122px);line-height:.86;letter-spacing:-6px;max-width:950px;margin:20px 0}}.lead{{max-width:580px;font-size:19px;line-height:1.6;color:rgba(255,255,255,.78)}}section{{max-width:1200px;margin:auto;padding:90px 6%}}.intro{{display:grid;grid-template-columns:1fr 1fr;gap:70px;align-items:end}}.intro h2{{font-size:clamp(42px,5vw,70px);line-height:.95;letter-spacing:-3px;margin:0}}.intro p{{font-size:18px;line-height:1.7;color:#66716c}}.grid{{display:grid;grid-template-columns:repeat(2,1fr);gap:24px}}.card{{background:#fff;border-radius:28px;overflow:hidden;text-decoration:none;color:inherit;transition:transform .25s ease,box-shadow .25s ease}}.card:hover{{transform:translateY(-6px);box-shadow:0 20px 50px rgba(0,0,0,.10)}}.pic{{height:330px;overflow:hidden;background:#10201b}}.pic img{{width:100%;height:100%;object-fit:cover;transition:transform .6s ease}}.card:hover img{{transform:scale(1.05)}}.cardbody{{padding:28px}}.cardbody small{{font-size:10px;letter-spacing:3px;font-weight:800;color:#718079}}.cardbody h3{{font-size:28px;line-height:1.1;letter-spacing:-1px;margin:13px 0 25px}}.cardbody span{{font-size:13px;font-weight:800}}.dark{{max-width:none;background:#0b1715;color:#fff}}.darkinner{{max-width:1200px;margin:auto;padding:100px 6%;display:grid;grid-template-columns:1fr 1fr;gap:70px;align-items:center}}.dark h2{{font-size:clamp(45px,6vw,80px);line-height:.9;letter-spacing:-4px;margin:0}}.dark p{{color:rgba(255,255,255,.68);font-size:18px;line-height:1.7}}footer{{padding:50px 6%;background:#07110f;color:#fff;text-align:center;font-size:12px}}@media(max-width:750px){{.intro,.darkinner,.grid{{grid-template-columns:1fr}}h1{{letter-spacing:-3px}}.pic{{height:260px}}}}</style></head><body><nav class="nav"><div class="logo">Stronger<span>Years</span></div><a href="#guides">Guides</a></nav><header class="hero"><img src="{latest_image}" alt="Latest StrongerYears guide visual"><div class="shade"></div><div class="hero-content"><div class="eyebrow">A better way to age</div><h1>Age well.<br>Live strong.</h1><p class="lead">Clear, practical ideas for strength, mobility, recovery and nutrition — without the hype.</p></div></header><section><div class="intro"><h2>Strength is something you can keep building.</h2><p>Getting older does not mean giving up an active life. The basics still matter: regular movement, useful nutrition, recovery and habits you can actually repeat. StrongerYears turns those ideas into simple, readable guides.</p></div></section><section id="guides"><div class="grid">{cards_html}</div></section><div class="dark"><div class="darkinner"><h2>Make your everyday habits work harder.</h2><div><p>Explore practical nutrition ideas, including the role amino acids can play alongside a balanced diet and an active lifestyle.</p><a href="{AFFILIATE_LINK}" target="_blank" rel="nofollow sponsored">Explore the Formula →</a><div>{DISCLOSURE}</div></div></div></div><footer>© {datetime.now().year} {SITE_NAME}</footer></body></html>'''
 
 # =========================================================
 # SITEMAP
@@ -441,6 +454,7 @@ def main():
 
             related = related_articles_for(title, keyword, current, 4)
             published_at = datetime.now(timezone.utc).isoformat()
+            create_topic_visual(title, keyword, slug)
             page = article_html(
                 title,
                 desc,
